@@ -3,15 +3,17 @@ use bevy::{prelude::*, render::camera::ScalingMode};
 
 pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
-pub const TILE_SIZE: f32 = 0.1;
+pub const TILE_SIZE: f32 = 0.075;
 
 mod player;
 mod debug;
 mod ascii;
+mod tilemap;
 
 use player::PlayerPlugin;
 use debug::DebugPlugin;
 use ascii::AsciiPlugin;
+use tilemap::TileMapPlugin;
 
 fn main() {
     App::new()
@@ -29,6 +31,7 @@ fn main() {
     .add_plugin(PlayerPlugin)
     .add_plugin(AsciiPlugin)
     .add_plugin(DebugPlugin)
+    .add_plugin(TileMapPlugin)
     .run();
 }
 
