@@ -5,34 +5,41 @@ pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.075;
 
-mod player;
-mod debug;
 mod ascii;
+mod debug;
+mod player;
 mod tilemap;
 
-use player::PlayerPlugin;
-use debug::DebugPlugin;
 use ascii::AsciiPlugin;
+use debug::DebugPlugin;
+use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+pub enum GameState {
+    Overworld,
+    Combat,
+}
 
 fn main() {
     App::new()
-    .insert_resource(ClearColor(CLEAR))
-    .insert_resource(WindowDescriptor {
-        width: 1600.0,
-        height: 900.0,
-        title: "Dreadblaze".to_string(),
-        vsync: true,
-        resizable: false,
-        ..Default::default()
-    })
-    .add_startup_system(spawn_camera)    
-    .add_plugins(DefaultPlugins)
-    .add_plugin(PlayerPlugin)
-    .add_plugin(AsciiPlugin)
-    .add_plugin(DebugPlugin)
-    .add_plugin(TileMapPlugin)
-    .run();
+        .add_state(GameState::Overworld)
+        .insert_resource(ClearColor(CLEAR))
+        .insert_resource(WindowDescriptor {
+            width: 1600.0,
+            height: 900.0,
+            title: "Dreadblaze".to_string(),
+            vsync: true,
+            resizable: false,
+            ..Default::default()
+        })
+        .add_startup_system(spawn_camera)
+        .add_plugins(DefaultPlugins)
+        .add_plugin(PlayerPlugin)
+        .add_plugin(AsciiPlugin)
+        .add_plugin(DebugPlugin)
+        .add_plugin(TileMapPlugin)
+        .run();
 }
 
 fn spawn_camera(mut commands: Commands) {

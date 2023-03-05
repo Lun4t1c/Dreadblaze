@@ -17,7 +17,7 @@ pub fn spawn_ascii_sprite(
     ascii: &AsciiSheet,
     index: usize,
     color: Color,
-    translation: Vec3
+    translation: Vec3,
 ) -> Entity {
     let mut sprite = TextureAtlasSprite::new(index);
     sprite.color = color;
@@ -31,19 +31,19 @@ pub fn spawn_ascii_sprite(
                 translation: translation,
                 ..Default::default()
             },
-        ..Default::default()
-        }).id()
+            ..Default::default()
+        })
+        .id()
 }
 
-fn load_ascii(mut commands: Commands, assets: Res<AssetServer>, mut texture_atlasses: ResMut<Assets<TextureAtlas>>) {
+fn load_ascii(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut texture_atlasses: ResMut<Assets<TextureAtlas>>,
+) {
     let image = assets.load("Ascii.png");
-    let atlas = TextureAtlas::from_grid_with_padding(
-        image,
-        Vec2::splat(9.0),
-        16,
-        16,
-        Vec2::splat(2.0)
-    );
+    let atlas =
+        TextureAtlas::from_grid_with_padding(image, Vec2::splat(9.0), 16, 16, Vec2::splat(2.0));
 
     let atlas_handle = texture_atlasses.add(atlas);
 
