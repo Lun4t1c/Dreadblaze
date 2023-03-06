@@ -65,8 +65,8 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
 }
 
 fn hide_map(
-    children_query: Query<&Children, With<Player>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Player>>,
+    children_query: Query<&Children, With<Map>>,
+    mut child_visibility_query: Query<&mut Visibility, Without<Map>>,
 ) {
     if let Ok(children) = children_query.get_single() {
         for child in children.iter() {

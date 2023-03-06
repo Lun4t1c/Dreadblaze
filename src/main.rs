@@ -9,11 +9,13 @@ mod ascii;
 mod debug;
 mod player;
 mod tilemap;
+mod combat;
 
 use ascii::AsciiPlugin;
 use debug::DebugPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
+use combat::CombatPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
@@ -36,6 +38,7 @@ fn main() {
         .add_startup_system(spawn_camera)
         .add_plugins(DefaultPlugins)
         .add_plugin(PlayerPlugin)
+        .add_plugin(CombatPlugin)
         .add_plugin(AsciiPlugin)
         .add_plugin(DebugPlugin)
         .add_plugin(TileMapPlugin)
