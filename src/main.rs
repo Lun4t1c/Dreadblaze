@@ -6,16 +6,18 @@ pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.075;
 
 mod ascii;
+mod combat;
 mod debug;
+mod fadeout;
 mod player;
 mod tilemap;
-mod combat;
 
 use ascii::AsciiPlugin;
+use combat::CombatPlugin;
 use debug::DebugPlugin;
+use fadeout::FadeoutPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
-use combat::CombatPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
@@ -42,6 +44,7 @@ fn main() {
         .add_plugin(AsciiPlugin)
         .add_plugin(DebugPlugin)
         .add_plugin(TileMapPlugin)
+        .add_plugin(FadeoutPlugin)
         .run();
 }
 

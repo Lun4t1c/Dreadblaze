@@ -58,6 +58,7 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
 
     commands
         .spawn()
+        .insert(Map)
         .insert(Name::new("Map"))
         .insert(Transform::default())
         .insert(GlobalTransform::default())

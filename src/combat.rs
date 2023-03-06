@@ -1,6 +1,9 @@
-use bevy::{prelude::*, sprite};
+use bevy::{prelude::*, sprite, transform};
 
-use crate::{GameState, ascii::{AsciiSheet, spawn_ascii_sprite}};
+use crate::{
+    ascii::{spawn_ascii_sprite, AsciiSheet},
+    GameState, fadeout::create_fadeout,
+};
 
 #[derive(Component)]
 pub struct Enemy;
@@ -9,29 +12,23 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system_set(
-                SystemSet::on_update(GameState::Combat).with_system(test_exit_combat)
-            )
-            .add_system_set(
-                SystemSet::on_enter(GameState::Combat).with_system(spawn_enemy)
-            )
-            .add_system_set(
-                SystemSet::on_exit(GameState::Combat).with_system(despawn_enemy)
-            );
+        app.add_system_set(
+            SystemSet::on_update(GameState::Combat)
+                .with_system(test_exit_combat)
+                .with_system(combat_camera),
+        )
+        .add_system_set(SystemSet::on_enter(GameState::Combat).with_system(spawn_enemy))
+        .add_system_set(SystemSet::on_exit(GameState::Combat).with_system(despawn_enemy));
     }
 }
 
-fn spawn_enemy(
-    mut commands: Commands,
-    ascii: Res<AsciiSheet>
-) {
+fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
     let sprite = spawn_ascii_sprite(
         &mut commands,
         &ascii,
         'b' as usize,
         Color::rgb(0.8, 0.8, 0.8),
-        Vec3::new(0.0, 0.5, 100.0)
+        Vec3::new(0.0, 0.5, 100.0),
     );
 
     commands
@@ -40,19 +37,25 @@ fn spawn_enemy(
         .insert(Name::new("Bat"));
 }
 
-fn despawn_enemy(
-    mut commands: Commands,
-    enemy_query: Query<Entity, With<Enemy>>
-) {
+fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
     for entity in enemy_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-fn test_exit_combat(mut keyboard: ResMut<Input<KeyCode>>, mut state: ResMut<State<GameState>>) {
+fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera>>) {
+    let mut camera_transform = camera_query.single_mut();
+    camera_transform.translation.x = 0.0;
+    camera_transform.translation.y = 0.0;
+}
+
+fn test_exit_combat(
+    mut commands: Commands,
+    mut keyboard: ResMut<Input<KeyCode>>,
+    mut state: ResMut<State<GameState>>,
+    ascii: Res<AsciiSheet>
+) {
     if keyboard.just_pressed(KeyCode::Space) {
-        println!("Changing to overworld");
-        state.set(GameState::Overworld).unwrap();
-        keyboard.clear();
+        create_fadeout(&mut commands, GameState::Overworld, &ascii)
     }
 }
