@@ -130,18 +130,18 @@ fn player_movement(
     }
 
     let mut y_delta = 0.0;
-    if keyboard.pressed(KeyCode::W) {
+    if keyboard.pressed(KeyCode::W) || keyboard.pressed(KeyCode::Up) {
         y_delta += player.speed * TILE_SIZE * time.delta_seconds();
     }
-    if keyboard.pressed(KeyCode::S) {
+    if keyboard.pressed(KeyCode::S) || keyboard.pressed(KeyCode::Down) {
         y_delta -= player.speed * TILE_SIZE * time.delta_seconds();
     }
 
     let mut x_delta = 0.0;
-    if keyboard.pressed(KeyCode::A) {
+    if keyboard.pressed(KeyCode::A) || keyboard.pressed(KeyCode::Left) {
         x_delta -= player.speed * TILE_SIZE * time.delta_seconds();
     }
-    if keyboard.pressed(KeyCode::D) {
+    if keyboard.pressed(KeyCode::D) || keyboard.pressed(KeyCode::Right) {
         x_delta += player.speed * TILE_SIZE * time.delta_seconds();
     }
 

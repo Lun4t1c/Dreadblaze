@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite, transform};
+use bevy::{prelude::*};
 
 use crate::{
     ascii::{spawn_ascii_sprite, AsciiSheet},
