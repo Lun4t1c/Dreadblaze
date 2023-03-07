@@ -5,7 +5,7 @@ use crate::{
     ascii::spawn_ascii_sprite,
     ascii::AsciiSheet,
     tilemap::{EncounterSpawner, TileCollider},
-    GameState, TILE_SIZE, fadeout::create_fadeout,
+    GameState, TILE_SIZE, fadeout::create_fadeout, combat::CombatStats,
 };
 
 pub struct PlayerPlugin;
@@ -184,6 +184,12 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
             speed: 3.0,
             active: true,
             just_moved: false,
+        })
+        .insert(CombatStats {
+            health: 10,
+            max_health: 10,
+            attack: 2,
+            defense: 1
         })
         .insert(EncounterTracker {
             timer: Timer::from_seconds(1.0, true),
