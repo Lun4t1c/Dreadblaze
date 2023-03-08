@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 use bevy_inspector_egui::Inspectable;
+use rand::Rng;
 
 use crate::{
     ascii::spawn_ascii_sprite,
@@ -89,6 +92,11 @@ fn player_encounter_checking(
         encounter_tracker.timer.tick(time.delta());
 
         if encounter_tracker.timer.just_finished() {
+            // Randomise encounter timer
+            encounter_tracker.timer.set_duration(
+                Duration::new(rand::thread_rng().gen_range(1..8), 0)
+            );
+
             player.active = false;
             create_fadeout(&mut commands, GameState::Combat, &ascii);
         }

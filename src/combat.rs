@@ -40,6 +40,33 @@ impl Plugin for CombatPlugin {
     }
 }
 
+fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+    let sprite = spawn_ascii_sprite(
+        &mut commands,
+        &ascii,
+        'b' as usize,
+        Color::rgb(0.8, 0.8, 0.8),
+        Vec3::new(0.0, 0.5, 100.0),
+    );
+
+    commands
+        .entity(sprite)
+        .insert(Enemy)
+        .insert(CombatStats {
+            health: 3,
+            max_health: 3,
+            attack: 2,
+            defense: 1
+        })
+        .insert(Name::new("Bat"));
+}
+
+fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
+    for entity in enemy_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
 fn damage_calculation(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
@@ -77,33 +104,6 @@ fn combat_input(
             target: target,
             damage_amount: player_stats.attack,
         });
-    }
-}
-
-fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
-    let sprite = spawn_ascii_sprite(
-        &mut commands,
-        &ascii,
-        'b' as usize,
-        Color::rgb(0.8, 0.8, 0.8),
-        Vec3::new(0.0, 0.5, 100.0),
-    );
-
-    commands
-        .entity(sprite)
-        .insert(Enemy)
-        .insert(CombatStats {
-            health: 3,
-            max_health: 3,
-            attack: 2,
-            defense: 1
-        })
-        .insert(Name::new("Bat"));
-}
-
-fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
-    for entity in enemy_query.iter() {
-        commands.entity(entity).despawn_recursive();
     }
 }
 
