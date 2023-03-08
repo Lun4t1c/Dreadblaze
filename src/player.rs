@@ -32,8 +32,8 @@ impl Plugin for PlayerPlugin {
             .add_system_set(SystemSet::on_exit(GameState::Overworld).with_system(hide_player))
             .add_system_set(
                 SystemSet::on_update(GameState::Overworld)
-                    .with_system(camera_follow.label("movement"))
-                    .with_system(player_movement.after("movement"))
+                    .with_system(camera_follow.after("movement"))
+                    .with_system(player_movement.label("movement"))
                     .with_system(player_encounter_checking.after("movement")),
             )
             .add_startup_system(spawn_player);
@@ -94,7 +94,10 @@ fn player_encounter_checking(
         if encounter_tracker.timer.just_finished() {
             // Randomise encounter timer
             encounter_tracker.timer.set_duration(
-                Duration::new(rand::thread_rng().gen_range(1..8), 0)
+                Duration::new(
+                    rand::thread_rng().gen_range(1..8), 
+                    0
+                )
             );
 
             player.active = false;
@@ -137,20 +140,25 @@ fn player_movement(
         return;
     }
 
+    let mut boost: f32  = 0.0;
+    if keyboard.pressed(KeyCode::LShift) {
+        boost = 5.0;
+    }
+
     let mut y_delta = 0.0;
     if keyboard.pressed(KeyCode::W) || keyboard.pressed(KeyCode::Up) {
-        y_delta += player.speed * TILE_SIZE * time.delta_seconds();
+        y_delta += (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::S) || keyboard.pressed(KeyCode::Down) {
-        y_delta -= player.speed * TILE_SIZE * time.delta_seconds();
+        y_delta -= (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
 
     let mut x_delta = 0.0;
     if keyboard.pressed(KeyCode::A) || keyboard.pressed(KeyCode::Left) {
-        x_delta -= player.speed * TILE_SIZE * time.delta_seconds();
+        x_delta -= (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::D) || keyboard.pressed(KeyCode::Right) {
-        x_delta += player.speed * TILE_SIZE * time.delta_seconds();
+        x_delta += (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
 
     let target = transform.translation + Vec3::new(x_delta, 0.0, 0.0);
