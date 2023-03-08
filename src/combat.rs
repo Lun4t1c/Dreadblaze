@@ -1,8 +1,8 @@
-use bevy::{prelude::*, input::keyboard};
+use bevy::{prelude::*};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet, self},
+    ascii::{spawn_ascii_sprite, AsciiSheet},
     GameState, fadeout::create_fadeout, player::Player,
 };
 
@@ -115,8 +115,7 @@ fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera>>) {
 
 fn test_exit_combat(
     mut commands: Commands,
-    mut keyboard: ResMut<Input<KeyCode>>,
-    mut state: ResMut<State<GameState>>,
+    keyboard: ResMut<Input<KeyCode>>,
     ascii: Res<AsciiSheet>
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
