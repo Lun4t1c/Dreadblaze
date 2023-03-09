@@ -1,4 +1,4 @@
-use bevy::{prelude::*, input::keyboard};
+use bevy::{prelude::*};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
@@ -37,6 +37,33 @@ impl Plugin for CombatPlugin {
             )
             .add_system_set(SystemSet::on_enter(GameState::Combat).with_system(spawn_enemy))
             .add_system_set(SystemSet::on_exit(GameState::Combat).with_system(despawn_enemy));
+    }
+}
+
+fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+    let sprite = spawn_ascii_sprite(
+        &mut commands,
+        &ascii,
+        'b' as usize,
+        Color::rgb(0.8, 0.8, 0.8),
+        Vec3::new(0.0, 0.5, 100.0),
+    );
+
+    commands
+        .entity(sprite)
+        .insert(Enemy)
+        .insert(CombatStats {
+            health: 3,
+            max_health: 3,
+            attack: 2,
+            defense: 1
+        })
+        .insert(Name::new("Bat"));
+}
+
+fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
+    for entity in enemy_query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }
 
@@ -142,8 +169,7 @@ fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera>>) {
 
 fn test_exit_combat(
     mut commands: Commands,
-    mut keyboard: ResMut<Input<KeyCode>>,
-    mut state: ResMut<State<GameState>>,
+    keyboard: ResMut<Input<KeyCode>>,
     ascii: Res<AsciiSheet>
 ) {
     if keyboard.just_pressed(KeyCode::Space) {

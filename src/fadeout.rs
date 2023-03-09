@@ -8,7 +8,7 @@ pub struct FadeoutPlugin;
 pub struct ScreenFade {
     alpha: f32,
     sent: bool,
-    next_state: GameState,
+    next_state: GameState
 }
 
 impl Plugin for FadeoutPlugin {
@@ -67,7 +67,7 @@ pub fn create_fadeout(
         .insert(ScreenFade {
             alpha: 0.0,
             sent: false,
-            next_state: next_state,
+            next_state: next_state
         })
         .insert(Name::new("Fadeout"));
 }
