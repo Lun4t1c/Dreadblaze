@@ -41,6 +41,15 @@ impl Plugin for CombatPlugin {
 }
 
 fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+    let enemy_health = 3;
+
+    let health_text = spawn_ascii_text(
+        &mut commands,
+        &ascii,
+        &format!("Health: {}", enemy_health),
+        Vec3::new(-4.5*TILE_SIZE, 2.0*TILE_SIZE, 100.0)
+    );
+
     let sprite = spawn_ascii_sprite(
         &mut commands,
         &ascii,
@@ -53,12 +62,13 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
         .entity(sprite)
         .insert(Enemy)
         .insert(CombatStats {
-            health: 3,
-            max_health: 3,
+            health: enemy_health,
+            max_health: enemy_health,
             attack: 2,
             defense: 1
         })
-        .insert(Name::new("Bat"));
+        .insert(Name::new("Bat"))
+        .add_child(health_text);
 }
 
 fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
@@ -121,43 +131,6 @@ fn combat_input(
             target: target,
             damage_amount: player_stats.attack,
         });
-    }
-}
-
-fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
-    let enemy_health = 3;
-
-    let health_text = spawn_ascii_text(
-        &mut commands,
-        &ascii,
-        &format!("Health: {}", enemy_health),
-        Vec3::new(-4.5*TILE_SIZE, 2.0*TILE_SIZE, 100.0)
-    );
-
-    let sprite = spawn_ascii_sprite(
-        &mut commands,
-        &ascii,
-        'b' as usize,
-        Color::rgb(0.8, 0.8, 0.8),
-        Vec3::new(0.0, 0.5, 100.0),
-    );
-
-    commands
-        .entity(sprite)
-        .insert(Enemy)
-        .insert(CombatStats {
-            health: enemy_health,
-            max_health: enemy_health,
-            attack: 2,
-            defense: 1
-        })
-        .insert(Name::new("Bat"))
-        .add_child(health_text);
-}
-
-fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
-    for entity in enemy_query.iter() {
-        commands.entity(entity).despawn_recursive();
     }
 }
 
