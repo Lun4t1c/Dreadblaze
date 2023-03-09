@@ -2,8 +2,8 @@ use bevy::{prelude::*, input::keyboard};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet, self},
-    GameState, fadeout::create_fadeout, player::Player,
+    ascii::{spawn_ascii_sprite, AsciiSheet, self, spawn_ascii_text, AsciiText},
+    GameState, fadeout::create_fadeout, player::Player, TILE_SIZE,
 };
 
 #[derive(Component)]
@@ -44,10 +44,11 @@ fn damage_calculation(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
     mut fight_event: EventReader<FightEvent>,
-    mut target_query: Query<&mut CombatStats>
+    mut text_query: Query<&AsciiText>,
+    mut target_query: Query<(&Children, &mut CombatStats)>
 ) {
     for event in fight_event.iter() {
-        let mut target_stats = target_query
+        let (target_children,mut target_stats) = target_query
             .get_mut(event.target)
             .expect("Fighting target without stats!");
 
@@ -55,6 +56,22 @@ fn damage_calculation(
             target_stats.health - (event.damage_amount - target_stats.defense),
             0
         );
+
+        // Update health
+        for child in target_children.iter() {
+            if text_query.get(*child).is_ok() {
+                // Delete old text
+                commands.entity(*child).despawn_recursive();
+
+                let new_health = spawn_ascii_text(
+                    &mut commands,
+                    &ascii,
+            &format!("Health: {}", target_stats.health),
+            Vec3::new(-4.5*TILE_SIZE, 2.0*TILE_SIZE, 100.0)
+                );
+                commands.entity(event.target).add_child(new_health);
+            }
+        }
 
         if target_stats.health == 0 {
             create_fadeout(&mut commands, GameState::Overworld, &ascii);
@@ -81,6 +98,15 @@ fn combat_input(
 }
 
 fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+    let enemy_health = 3;
+
+    let health_text = spawn_ascii_text(
+        &mut commands,
+        &ascii,
+        &format!("Health: {}", enemy_health),
+        Vec3::new(-4.5*TILE_SIZE, 2.0*TILE_SIZE, 100.0)
+    );
+
     let sprite = spawn_ascii_sprite(
         &mut commands,
         &ascii,
@@ -93,12 +119,13 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
         .entity(sprite)
         .insert(Enemy)
         .insert(CombatStats {
-            health: 3,
-            max_health: 3,
+            health: enemy_health,
+            max_health: enemy_health,
             attack: 2,
             defense: 1
         })
-        .insert(Name::new("Bat"));
+        .insert(Name::new("Bat"))
+        .add_child(health_text);
 }
 
 fn despawn_enemy(mut commands: Commands, enemy_query: Query<Entity, With<Enemy>>) {
