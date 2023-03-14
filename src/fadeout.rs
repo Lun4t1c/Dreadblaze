@@ -8,13 +8,12 @@ pub struct FadeoutPlugin;
 pub struct ScreenFade {
     alpha: f32,
     sent: bool,
-    next_state: GameState
+    next_state: GameState,
 }
 
 impl Plugin for FadeoutPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system(fadeout);
+        app.add_system(fadeout);
     }
 }
 
@@ -22,7 +21,7 @@ fn fadeout(
     mut commands: Commands,
     mut fade_query: Query<(Entity, &mut ScreenFade, &mut Timer, &mut TextureAtlasSprite)>,
     mut state: ResMut<State<GameState>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
     for (entity, mut fade, mut timer, mut sprite) in fade_query.iter_mut() {
         timer.tick(time.delta());
@@ -44,11 +43,7 @@ fn fadeout(
     }
 }
 
-pub fn create_fadeout(
-    commands: &mut Commands,
-    next_state: GameState,
-    ascii: &Res<AsciiSheet>
-) {
+pub fn create_fadeout(commands: &mut Commands, next_state: GameState, ascii: &Res<AsciiSheet>) {
     let mut sprite = TextureAtlasSprite::new(0);
     sprite.color = Color::rgba(0.1, 0.1, 0.15, 0.0);
     sprite.custom_size = Some(Vec2::splat(100000.0));
@@ -67,7 +62,7 @@ pub fn create_fadeout(
         .insert(ScreenFade {
             alpha: 0.0,
             sent: false,
-            next_state: next_state
+            next_state: next_state,
         })
         .insert(Name::new("Fadeout"));
 }

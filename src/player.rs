@@ -7,8 +7,10 @@ use rand::Rng;
 use crate::{
     ascii::spawn_ascii_sprite,
     ascii::AsciiSheet,
+    combat::CombatStats,
+    fadeout::create_fadeout,
     tilemap::{EncounterSpawner, TileCollider},
-    GameState, TILE_SIZE, fadeout::create_fadeout, combat::CombatStats,
+    GameState, TILE_SIZE,
 };
 
 pub struct PlayerPlugin;
@@ -93,12 +95,9 @@ fn player_encounter_checking(
 
         if encounter_tracker.timer.just_finished() {
             // Randomise encounter timer
-            encounter_tracker.timer.set_duration(
-                Duration::new(
-                    rand::thread_rng().gen_range(1..8), 
-                    0
-                )
-            );
+            encounter_tracker
+                .timer
+                .set_duration(Duration::new(rand::thread_rng().gen_range(1..8), 0));
 
             player.active = false;
             create_fadeout(&mut commands, GameState::Combat, &ascii);
@@ -140,7 +139,7 @@ fn player_movement(
         return;
     }
 
-    let mut boost: f32  = 0.0;
+    let mut boost: f32 = 0.0;
     if keyboard.pressed(KeyCode::LShift) {
         boost = 5.0;
     }
@@ -191,7 +190,7 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
         1,
         Color::rgb(0.3, 0.3, 0.3),
         Vec3::new(2.0 * TILE_SIZE, -2.0 * TILE_SIZE, 900.0),
-        Vec3::splat(1.0)
+        Vec3::splat(1.0),
     );
 
     commands
@@ -206,7 +205,7 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
             health: 10,
             max_health: 10,
             attack: 2,
-            defense: 1
+            defense: 1,
         })
         .insert(EncounterTracker {
             timer: Timer::from_seconds(1.0, true),
@@ -219,7 +218,7 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
         0,
         Color::rgb(0.5, 0.5, 0.5),
         Vec3::new(0.0, 0.0, -1.0),
-        Vec3::splat(1.0)
+        Vec3::splat(1.0),
     );
 
     commands
