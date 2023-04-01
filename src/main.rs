@@ -11,6 +11,7 @@ mod debug;
 mod fadeout;
 mod player;
 mod tilemap;
+mod audio;
 
 use ascii::AsciiPlugin;
 use combat::CombatPlugin;
@@ -18,6 +19,7 @@ use debug::DebugPlugin;
 use fadeout::FadeoutPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
+use audio::GameAudioPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
@@ -45,6 +47,7 @@ fn main() {
         .add_plugin(DebugPlugin)
         .add_plugin(TileMapPlugin)
         .add_plugin(FadeoutPlugin)
+        .add_plugin(GameAudioPlugin)
         .run();
 }
 
