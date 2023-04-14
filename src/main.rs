@@ -12,7 +12,9 @@ mod fadeout;
 mod player;
 mod tilemap;
 mod audio;
+mod graphics;
 
+use graphics::GraphicsPlugin;
 use ascii::AsciiPlugin;
 use combat::CombatPlugin;
 use debug::DebugPlugin;
@@ -48,6 +50,7 @@ fn main() {
         .add_plugin(TileMapPlugin)
         .add_plugin(FadeoutPlugin)
         .add_plugin(GameAudioPlugin)
+        .add_plugin(GraphicsPlugin)
         .run();
 }
 

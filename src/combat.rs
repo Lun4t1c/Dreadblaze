@@ -8,7 +8,7 @@ use crate::{
     },
     fadeout::create_fadeout,
     player::Player,
-    GameState, RESOLUTION, TILE_SIZE,
+    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_bat_sprite},
 };
 
 #[derive(Component)]
@@ -95,17 +95,19 @@ impl Plugin for CombatPlugin {
                     .with_system(spawn_combat_menu),
             )
             .add_system_set(
-                SystemSet::on_exit(GameState::Combat)
-                    .with_system(despawn_enemy)
+                SystemSet::on_exit(GameState::Combat)                    
                     .with_system(despawn_all_combat_text)
                     .with_system(despawn_menu)
+                    .with_system(despawn_enemy)
             )
             .add_system_set(
                 SystemSet::on_update(CombatState::PlayerAttack)
                     .with_system(handle_attack_effects)
             )
             .add_system_set(
-                SystemSet::on_enter(CombatState::Reward).with_system(give_reward)
+                SystemSet::on_enter(CombatState::Reward)
+                    .with_system(give_reward)
+                    .with_system(despawn_enemy)
             )
             .add_system_set(
                 SystemSet::on_update(CombatState::Reward).with_system(handle_accepting_reward)
@@ -238,26 +240,17 @@ fn despawn_all_combat_text(
     }
 }
 
-fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<CharacterSheet>) {
     let enemy_health = 3;
-
     let health_text = spawn_ascii_text(
         &mut commands,
         &ascii,
-        &format!("Health: {}", enemy_health),
-        Vec3::new(-4.5 * TILE_SIZE, 2.0 * TILE_SIZE, 100.0),
+        &format!("Health: {}", enemy_health as usize),
+        //relative to enemy pos
+        Vec3::new(-4.5 * TILE_SIZE, 0.5, 100.0),
     );
-
     commands.entity(health_text).insert(CombatText);
-    let sprite = spawn_ascii_sprite(
-        &mut commands,
-        &ascii,
-        'b' as usize,
-        Color::rgb(0.8, 0.8, 0.8),
-        Vec3::new(0.0, 0.5, 100.0),
-        Vec3::splat(1.0),
-    );
-
+    let sprite = spawn_bat_sprite(&mut commands, &characters, Vec3::new(0.0, 0.3, 100.0));
     commands
         .entity(sprite)
         .insert(Enemy)
