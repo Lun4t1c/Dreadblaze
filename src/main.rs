@@ -13,6 +13,7 @@ mod player;
 mod tilemap;
 mod audio;
 mod graphics;
+mod start_menu;
 
 use graphics::GraphicsPlugin;
 use ascii::AsciiPlugin;
@@ -22,6 +23,7 @@ use fadeout::FadeoutPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
 use audio::GameAudioPlugin;
+use start_menu::MainMenuPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
@@ -51,8 +53,12 @@ fn main() {
         .add_plugin(FadeoutPlugin)
         .add_plugin(GameAudioPlugin)
         .add_plugin(GraphicsPlugin)
+        .add_plugin(MainMenuPlugin)
         .run();
 }
+
+#[derive(Component)]
+pub struct MainCamera;
 
 fn spawn_camera(mut commands: Commands) {
     let mut camera: OrthographicCameraBundle = OrthographicCameraBundle::new_2d();
@@ -65,5 +71,5 @@ fn spawn_camera(mut commands: Commands) {
 
     camera.orthographic_projection.scaling_mode = ScalingMode::None;
 
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(MainCamera);
 }

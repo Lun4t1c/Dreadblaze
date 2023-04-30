@@ -10,7 +10,7 @@ use crate::{
     combat::CombatStats,
     fadeout::create_fadeout,
     tilemap::{EncounterSpawner, TileCollider},
-    GameState, TILE_SIZE,
+    GameState, TILE_SIZE, MainCamera,
 };
 
 pub struct PlayerPlugin;
@@ -108,7 +108,7 @@ fn player_encounter_checking(
 
 fn camera_follow(
     player_query: Query<&Transform, With<Player>>,
-    mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
+    mut camera_query: Query<&mut Transform, (Without<Player>, With<MainCamera>)>,
 ) {
     let player_transform = player_query.single();
     let mut camera_transform = camera_query.single_mut();
