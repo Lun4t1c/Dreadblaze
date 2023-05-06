@@ -5,7 +5,7 @@ use crate::{ascii::AsciiSheet, GameState};
 pub struct FadeoutPlugin;
 
 #[derive(Component)]
-pub struct ScreenFade {
+struct ScreenFade {
     alpha: f32,
     sent: bool,
     next_state: Option<GameState>,
@@ -14,17 +14,15 @@ pub struct ScreenFade {
 
 impl Plugin for FadeoutPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system(fadeout)
-            .add_system(ui_fadeout);
+        app.add_system(fadeout).add_system(ui_fadeout);
     }
 }
 
 fn ui_fadeout(
     fade_query: Query<&ScreenFade>,
     mut ui_query: Query<&mut UiColor>,
-    mut text_query: Query<&mut Text>
-){
+    mut text_query: Query<&mut Text>,
+) {
     if let Some(fade) = fade_query.iter().next() {
         for mut ui_color in ui_query.iter_mut() {
             ui_color.0.set_a(1.0 - fade.alpha);
@@ -54,7 +52,7 @@ fn fadeout(
 
         if fade.timer.percent() > 0.5 && !fade.sent {
             if let Some(next_state) = fade.next_state {
-                state.set(next_state).unwrap();                
+                state.push(next_state).unwrap();
             } else {
                 state.pop().unwrap();
             }
@@ -67,7 +65,11 @@ fn fadeout(
     }
 }
 
-pub fn create_fadeout(commands: &mut Commands, next_state: Option<GameState>, ascii: &Res<AsciiSheet>) {
+pub fn create_fadeout(
+    commands: &mut Commands,
+    next_state: Option<GameState>,
+    ascii: &Res<AsciiSheet>,
+) {
     let mut sprite = TextureAtlasSprite::new(0);
     sprite.color = Color::rgba(0.1, 0.1, 0.15, 0.0);
     sprite.custom_size = Some(Vec2::splat(100000.0));
@@ -86,7 +88,7 @@ pub fn create_fadeout(commands: &mut Commands, next_state: Option<GameState>, as
             alpha: 0.0,
             sent: false,
             next_state: next_state,
-            timer: Timer::from_seconds(1.0, false)
+            timer: Timer::from_seconds(1.0, false),
         })
         .insert(Name::new("Fadeout"));
 }

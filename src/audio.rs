@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use bevy_kira_audio::{Audio, AudioPlugin, AudioSource, AudioChannel};
+use bevy_kira_audio::{Audio, AudioChannel, AudioPlugin, AudioSource};
 
+use crate::combat::{CombatState, FightEvent};
 use crate::GameState;
-use crate::combat::{FightEvent, CombatState};
 
 pub struct GameAudioPlugin;
 
@@ -15,21 +15,67 @@ pub struct AudioState {
     bgm_channel: AudioChannel,
     combat_channel: AudioChannel,
     sfx_channel: AudioChannel,
-    volume: f32
+    volume: f32,
 }
 
 impl Plugin for GameAudioPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(AudioPlugin)
             .add_startup_system_to_stage(StartupStage::PreStartup, load_audio)
-            .add_startup_system(start_bgm_music)
             .add_system_set(SystemSet::on_enter(GameState::Combat).with_system(start_combat_music))
-            .add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(resume_bgm_music))
+            .add_system_set(
+                SystemSet::on_resume(GameState::Overworld).with_system(resume_bgm_music),
+            )
             .add_system_set(SystemSet::on_enter(CombatState::Reward).with_system(play_reward_sfx))
-            .add_startup_system(start_bgm_music)
             .add_system(play_hit_sfx)
-            .add_system(volume_control);
+            .add_system(volume_control)
+            .add_startup_system(start_bgm_music);
     }
+}
+fn play_reward_sfx(audio: Res<Audio>, audio_state: Res<AudioState>) {
+    audio.play_in_channel(audio_state.reward_handle.clone(), &audio_state.sfx_channel);
+}
+
+fn play_hit_sfx(
+    audio: Res<Audio>,
+    audio_state: Res<AudioState>,
+    mut fight_event: EventReader<FightEvent>,
+) {
+    if fight_event.iter().count() > 0 {
+        audio.play_in_channel(audio_state.hit_handle.clone(), &audio_state.sfx_channel);
+    }
+}
+
+fn resume_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
+    audio.stop_channel(&audio_state.combat_channel);
+    audio.resume_channel(&audio_state.bgm_channel);
+}
+
+fn start_combat_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
+    audio.pause_channel(&audio_state.bgm_channel);
+    audio.play_looped_in_channel(
+        audio_state.combat_handle.clone(),
+        &audio_state.combat_channel,
+    );
+}
+
+fn volume_control(
+    keyboard: Res<Input<KeyCode>>,
+    audio: Res<Audio>,
+    mut audio_state: ResMut<AudioState>,
+) {
+    if keyboard.just_pressed(KeyCode::Up) {
+        audio_state.volume += 0.10;
+    }
+    if keyboard.just_pressed(KeyCode::Down) {
+        audio_state.volume -= 0.10;
+    }
+    audio_state.volume = audio_state.volume.clamp(0.0, 1.0);
+    audio.set_volume_in_channel(audio_state.volume, &audio_state.bgm_channel);
+}
+
+fn start_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
+    audio.play_looped_in_channel(audio_state.bgm_handle.clone(), &audio_state.bgm_channel);
 }
 
 fn load_audio(mut commands: Commands, audio: Res<Audio>, assets: Res<AssetServer>) {
@@ -47,7 +93,7 @@ fn load_audio(mut commands: Commands, audio: Res<Audio>, assets: Res<AssetServer
     audio.set_volume_in_channel(volume, &combat_channel);
     audio.set_volume_in_channel(volume, &sfx_channel);
 
-    commands.insert_resource(AudioState{
+    commands.insert_resource(AudioState {
         bgm_handle: bgm_handle,
         combat_handle: combat_handle,
         hit_handle: hit_handle,
@@ -57,54 +103,4 @@ fn load_audio(mut commands: Commands, audio: Res<Audio>, assets: Res<AssetServer
         sfx_channel,
         volume,
     });
-}
-
-fn volume_control(
-    keyboard: Res<Input<KeyCode>>,
-    audio: Res<Audio>,
-    mut audio_state: ResMut<AudioState>
-) {
-    if keyboard.just_pressed(KeyCode::NumpadAdd) {
-        audio_state.volume += 0.1;
-    }
-    if keyboard.just_pressed(KeyCode::NumpadSubtract) {
-        audio_state.volume -= 0.1;
-    }
-    audio_state.volume = audio_state.volume.clamp(0.0, 1.0);
-    audio.set_volume_in_channel(audio_state.volume, &audio_state.bgm_channel);
-}
-
-fn play_hit_sfx(
-    audio: Res<Audio>,
-    audio_state: Res<AudioState>,
-    mut fight_event: EventReader<FightEvent>
-) {
-    if fight_event.iter().count() > 0 {
-        audio.play_in_channel(audio_state.hit_handle.clone(), &audio_state.sfx_channel);
-    }
-}
-
-fn play_reward_sfx(
-    audio: Res<Audio>,
-    audio_state: Res<AudioState>,
-    mut fight_event: EventReader<FightEvent>
-) {
-    audio.play_in_channel(audio_state.reward_handle.clone(), &audio_state.sfx_channel);
-}
-
-fn start_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
-    audio.play_looped_in_channel(
-        audio_state.bgm_handle.clone(),
-        &audio_state.bgm_channel
-    );
-}
-
-fn resume_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
-    audio.stop_channel(&audio_state.combat_channel);
-    audio.resume_channel(&audio_state.bgm_channel);
-}
-
-fn start_combat_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
-    audio.pause_channel(&audio_state.bgm_channel);
-    audio.play_looped_in_channel(audio_state.combat_handle.clone(), &audio_state.combat_channel);
 }
