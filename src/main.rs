@@ -14,6 +14,7 @@ mod tilemap;
 mod audio;
 mod graphics;
 mod start_menu;
+mod npc;
 
 use graphics::GraphicsPlugin;
 use ascii::AsciiPlugin;
@@ -24,6 +25,7 @@ use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
 use audio::GameAudioPlugin;
 use start_menu::MainMenuPlugin;
+use npc::NpcPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
@@ -55,6 +57,7 @@ fn main() {
         .add_plugin(GameAudioPlugin)
         .add_plugin(GraphicsPlugin)
         .add_plugin(MainMenuPlugin)
+        .add_plugin(NpcPlugin)
         .run();
 }
 
