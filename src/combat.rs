@@ -196,10 +196,12 @@ fn process_enemy_turn(
 fn handle_accepting_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
-    keyboard: Res<Input<KeyCode>>
+    keyboard: Res<Input<KeyCode>>,
+    mut combat_state: ResMut<State<CombatState>>,
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
-        create_fadeout(&mut commands, GameState::Overworld, &ascii);
+        combat_state.set(CombatState::Exiting).unwrap();
+        create_fadeout(&mut commands, None, &ascii);
     }
 }
 
@@ -452,7 +454,7 @@ fn combat_input(
                 });
             }
             CombatMenuOption::Run => {
-                create_fadeout(&mut commands, GameState::Overworld, &ascii);
+                create_fadeout(&mut commands, None, &ascii);
             }
         }
     }

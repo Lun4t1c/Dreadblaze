@@ -31,15 +31,18 @@ pub struct Player {
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(show_player))
-            .add_system_set(SystemSet::on_exit(GameState::Overworld).with_system(hide_player))
+        app.add_system_set(SystemSet::on_resume(GameState::Overworld).with_system(show_player))
+            .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_player))
             .add_system_set(
                 SystemSet::on_update(GameState::Overworld)
                     .with_system(camera_follow.after("movement"))
                     .with_system(player_movement.label("movement"))
                     .with_system(player_encounter_checking.after("movement")),
             )
-            .add_startup_system(spawn_player);
+            .add_system_set(
+                SystemSet::on_enter(GameState::Overworld)
+                    .with_system(spawn_player)
+            );
     }
 }
 
@@ -101,7 +104,7 @@ fn player_encounter_checking(
                 .set_duration(Duration::new(rand::thread_rng().gen_range(1..8), 0));
 
             player.active = false;
-            create_fadeout(&mut commands, GameState::Combat, &ascii);
+            create_fadeout(&mut commands, Some(GameState::Combat,), &ascii);
         }
     }
 }

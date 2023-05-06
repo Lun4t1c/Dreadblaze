@@ -27,13 +27,14 @@ use start_menu::MainMenuPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum GameState {
+    StartMenu,
     Overworld,
     Combat,
 }
 
 fn main() {
     App::new()
-        .add_state(GameState::Overworld)
+        .add_state(GameState::StartMenu)
         .insert_resource(ClearColor(CLEAR))
         .insert_resource(WindowDescriptor {
             width: 1600.0,
