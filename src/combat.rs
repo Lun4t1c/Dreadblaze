@@ -208,7 +208,7 @@ fn handle_accepting_reward(
 fn give_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
-    mut player_query: Query<&mut Player>,
+    mut player_query: Query<(&mut Player, &mut CombatStats)>,
     mut keyboard: ResMut<Input<KeyCode>>
 ) {
     let exp_reward = 10;
@@ -221,7 +221,20 @@ fn give_reward(
     );
 
     commands.entity(text).insert(CombatText);
-    player_query.single_mut().exp += exp_reward;
+    let (mut player, mut stats) = player_query.single_mut();
+    if player.give_exp(exp_reward, &mut stats) {
+        let level_text = "Level up!";
+        let text = spawn_ascii_text(
+            &mut commands,
+            &ascii,
+            level_text,
+            Vec3::new(-((level_text.len()/2) as f32 * TILE_SIZE), 
+            -1.5 * TILE_SIZE,
+            0.0
+            ),
+        );
+        commands.entity(text).insert(CombatText);
+    }
 }
 
 fn despawn_menu(
