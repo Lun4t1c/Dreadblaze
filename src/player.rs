@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide};
+use bevy::{prelude::*, sprite::collide_aabb::collide, render::camera::Camera2d};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     combat::CombatStats,
     fadeout::create_fadeout,
     tilemap::{EncounterSpawner, TileCollider},
-    GameState, MainCamera, TILE_SIZE,
+    GameState, TILE_SIZE,
 };
 
 pub struct PlayerPlugin;
@@ -31,9 +31,9 @@ impl Plugin for PlayerPlugin {
             .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_player))
             .add_system_set(
                 SystemSet::on_update(GameState::Overworld)
-                    .with_system(player_encounter_checking.after("movement"))
-                    .with_system(camera_follow.after("movement"))
-                    .with_system(player_movement.label("movement")),
+                    .with_system(player_encounter_checking.after(player_movement))
+                    .with_system(camera_follow.after(player_movement))
+                    .with_system(player_movement),
             )
             .add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(spawn_player));
     }
@@ -100,7 +100,7 @@ fn player_encounter_checking(
 
 fn camera_follow(
     player_query: Query<&Transform, With<Player>>,
-    mut camera_query: Query<&mut Transform, (Without<Player>, With<MainCamera>)>,
+    mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera2d>)>,
 ) {
     let player_transform = player_query.single();
     let mut camera_transform = camera_query.single_mut();

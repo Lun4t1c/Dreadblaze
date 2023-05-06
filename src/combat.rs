@@ -1,4 +1,4 @@
-use bevy::{prelude::*, transform, input::keyboard};
+use bevy::{prelude::*, transform, input::keyboard, render::camera::Camera2d};
 use bevy_inspector_egui::{Inspectable, egui::Visuals};
 
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     },
     fadeout::create_fadeout,
     player::Player,
-    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_bat_sprite}, MainCamera,
+    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_bat_sprite},
 };
 
 #[derive(Component)]
@@ -460,7 +460,7 @@ fn combat_input(
     }
 }
 
-fn combat_camera(mut camera_query: Query<&mut Transform, With<MainCamera>>, attack_fx: Res<AttackEffects>) {
+fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, attack_fx: Res<AttackEffects>) {
     let mut camera_transform = camera_query.single_mut();
     camera_transform.translation.x = attack_fx.current_shake;
     camera_transform.translation.y = 0.0;
