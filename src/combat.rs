@@ -8,11 +8,13 @@ use crate::{
     },
     fadeout::create_fadeout,
     player::Player,
-    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_bat_sprite},
+    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_enemy_sprite},
 };
 
 #[derive(Component)]
-pub struct Enemy;
+pub struct Enemy {
+    enemy_type: EnemyType
+}
 
 pub const MENU_COUNT: isize = 2;
 
@@ -39,6 +41,12 @@ pub struct CombatStats {
     pub max_health: isize,
     pub attack: isize,
     pub defense: isize,
+}
+
+#[derive(Clone, Copy)]
+pub enum EnemyType {
+    Bat,
+    Ghost,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -209,9 +217,13 @@ fn give_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
     mut player_query: Query<(&mut Player, &mut CombatStats)>,
+    mut enemy_query: Query<(&Enemy)>,
     mut keyboard: ResMut<Input<KeyCode>>
 ) {
-    let exp_reward = 10;
+    let exp_reward = match enemy_query.single().enemy_type {
+        EnemyType::Bat => 10,
+        EnemyType::Ghost => 30,
+    };
     let reward_text = format!("Earned {} exp", exp_reward);
     let text = spawn_ascii_text(
         &mut commands,
@@ -256,25 +268,41 @@ fn despawn_all_combat_text(
 }
 
 fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<CharacterSheet>) {
+    let enemy_type = match rand::random::<f32>() {
+        x if x < 0.5 => EnemyType::Bat,
+        _ => EnemyType::Ghost,
+    };
+    let stats = match enemy_type {
+        EnemyType::Bat => CombatStats {
+            health: 3,
+            max_health: 3,
+            attack: 2,
+            defense: 1,
+        },
+        EnemyType::Ghost => CombatStats {
+            health: 5,
+            max_health: 5,
+            attack: 3,
+            defense: 2,
+        },
+    };
+
     let enemy_health = 3;
     let health_text = spawn_ascii_text(
         &mut commands,
         &ascii,
-        &format!("Health: {}", enemy_health as usize),
+        &format!("Health: {}", stats.health as usize),
         //relative to enemy pos
         Vec3::new(-4.5 * TILE_SIZE, 0.5, 100.0),
     );
     commands.entity(health_text).insert(CombatText);
-    let sprite = spawn_bat_sprite(&mut commands, &characters, Vec3::new(0.0, 0.3, 100.0));
+    let sprite = spawn_enemy_sprite(&mut commands, &characters, Vec3::new(0.0, 0.3, 100.0), enemy_type);
     commands
         .entity(sprite)
-        .insert(Enemy)
-        .insert(CombatStats {
-            health: enemy_health,
-            max_health: enemy_health,
-            attack: 2,
-            defense: 1,
+        .insert(Enemy {
+            enemy_type
         })
+        .insert(stats)
         .insert(Name::new("Bat"))
         .add_child(health_text);
 }
