@@ -217,7 +217,7 @@ fn give_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
     mut player_query: Query<(&mut Player, &mut CombatStats)>,
-    mut enemy_query: Query<(&Enemy)>,
+    mut enemy_query: Query<&Enemy>,
     mut keyboard: ResMut<Input<KeyCode>>
 ) {
     let exp_reward = match enemy_query.single().enemy_type {
