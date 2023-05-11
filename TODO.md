@@ -3,7 +3,7 @@
 ### General
 
 - [ ] Fighting multiple enemies
-- [ ] Randomised enemies
+- [ ] Graphics
 
 ### Bugs
 - [ ] Crashes after pressing space when fading out
