@@ -139,20 +139,25 @@ fn player_movement(
         return;
     }
 
+    let mut boost: f32  = 0.0;
+    if keyboard.pressed(KeyCode::LShift) {
+        boost = 5.0;
+    }
+
     let mut y_delta = 0.0;
     if keyboard.pressed(KeyCode::W) {
-        y_delta += player.speed * TILE_SIZE * time.delta_seconds();
+        y_delta += (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::S) {
-        y_delta -= player.speed * TILE_SIZE * time.delta_seconds();
+        y_delta -= (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
 
     let mut x_delta = 0.0;
     if keyboard.pressed(KeyCode::A) {
-        x_delta -= player.speed * TILE_SIZE * time.delta_seconds();
+        x_delta -= (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::D) {
-        x_delta += player.speed * TILE_SIZE * time.delta_seconds();
+        x_delta += (player.speed + boost) * TILE_SIZE * time.delta_seconds();
     }
 
     let target = transform.translation + Vec3::new(0.0, y_delta, 0.0);
