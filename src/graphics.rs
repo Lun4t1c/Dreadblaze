@@ -1,7 +1,6 @@
-use bevy::animation;
 use::bevy::prelude::*;
 
-use crate::combat::EnemyType;
+use crate::{combat::EnemyType, TILE_SIZE};
 
 pub struct GraphicsPlugin;
 
@@ -13,7 +12,16 @@ pub struct CharacterSheet {
     pub player_right: [usize; 3],
 
     pub bat_frames: [usize; 3],
-    pub ghost_frames: [usize; 3]
+    pub ghost_frames: [usize; 3],
+
+    pub healer: usize,
+}
+
+pub struct GroundTilesSheet {
+    pub handle: Handle<TextureAtlas>,
+    pub sand: usize,
+    pub grass: usize,
+    pub wall: usize,
 }
 
 pub enum FacingDirection {
@@ -50,11 +58,6 @@ pub fn spawn_enemy_sprite(
     translation: Vec3,
     enemy_type: EnemyType
 ) -> Entity {
-    let mut sprite = match enemy_type {
-        EnemyType::Bat => TextureAtlasSprite::new(characters.bat_frames[0]),
-        EnemyType::Ghost => TextureAtlasSprite::new(characters.ghost_frames[0]),
-    };
-
     let mut sprite = TextureAtlasSprite::new(characters.bat_frames[0]);
     sprite.custom_size = Some(Vec2::splat(0.5));
     let animation = match enemy_type {
@@ -83,29 +86,97 @@ pub fn spawn_enemy_sprite(
     .id()
 }
 
+pub fn spawn_ground_tile_sprite(
+    commands: &mut Commands,
+    ground_tiles: &GroundTilesSheet,
+    index: usize,
+    translation: Vec3,
+    scale: Vec3,
+) -> Entity {
+    let mut sprite = TextureAtlasSprite::new(index);
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            sprite: sprite,
+            texture_atlas: ground_tiles.handle.clone(),
+            transform: Transform {
+                translation: translation,
+                scale: scale,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .id()
+}
+
+pub fn spawn_character_sprite(
+    commands: &mut Commands,
+    characters: &CharacterSheet,
+    index: usize,
+    translation: Vec3,
+    scale: Vec3,
+) -> Entity {
+    let mut sprite = TextureAtlasSprite::new(index);
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            sprite: sprite,
+            texture_atlas: characters.handle.clone(),
+            transform: Transform {
+                translation: translation,
+                scale: scale,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .id()
+}
+
 impl GraphicsPlugin {
     fn load_graphics(
         mut commands: Commands,
         assets: Res<AssetServer>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>
     ) {
-        let image = assets.load("characters.png");
-        let atlas = TextureAtlas::from_grid_with_padding(
-            image, Vec2::splat(16.0), 12, 8, Vec2::splat(2.0)
+        // Characters sheet
+        let characters_sheet_handle = assets.load("characters.png");
+        let characters_atlas = TextureAtlas::from_grid_with_padding(
+            characters_sheet_handle, Vec2::splat(16.0), 12, 8, Vec2::splat(2.0)
         );
-        let atlas_handle = texture_atlases.add(atlas);
+        let characters_atlas_handle = texture_atlases.add(characters_atlas);
 
-        let columns = 12;
+        let characters_columns = 12;
 
         commands.insert_resource(CharacterSheet {
-            handle: atlas_handle,
-            player_down: [columns * 0 + 3, columns * 0 + 4, columns * 0 + 5],
-            player_left: [columns * 1 + 3, columns * 1 + 4, columns * 1 + 5],
-            player_right: [columns * 2 + 3, columns * 2 + 4, columns * 2 + 5],
-            player_up: [columns * 3 + 3, columns * 3 + 4, columns * 3 + 5],
-            bat_frames: [columns * 4 + 3, columns * 4 + 4, columns * 4 + 5],
-            ghost_frames: [columns * 4 + 6, columns * 4 + 7, columns * 4 + 8],
-        })
+            handle: characters_atlas_handle,
+            player_down: [characters_columns * 0 + 3, characters_columns * 0 + 4, characters_columns * 0 + 5],
+            player_left: [characters_columns * 1 + 3, characters_columns * 1 + 4, characters_columns * 1 + 5],
+            player_right: [characters_columns * 2 + 3, characters_columns * 2 + 4, characters_columns * 2 + 5],
+            player_up: [characters_columns * 3 + 3, characters_columns * 3 + 4, characters_columns * 3 + 5],
+            
+            bat_frames: [characters_columns * 4 + 3, characters_columns * 4 + 4, characters_columns * 4 + 5],
+            ghost_frames: [characters_columns * 4 + 6, characters_columns * 4 + 7, characters_columns * 4 + 8],
+
+            healer: characters_columns * 0 + 6,
+        });
+
+        // Ground tiles sheet
+        let ground_tiles_sheet_handle = assets.load("ground-tiles.png");
+        let ground_tiles_atlas = TextureAtlas::from_grid_with_padding(
+            ground_tiles_sheet_handle, Vec2::splat(16.0), 32, 32, Vec2::splat(0.0)
+        );
+        let ground_tiles_atlas_handle = texture_atlases.add(ground_tiles_atlas);
+
+        let ground_tiles_columns = 32;
+
+        commands.insert_resource(GroundTilesSheet {
+            handle: ground_tiles_atlas_handle,
+            grass: ground_tiles_columns * 15 + 2,
+            sand: ground_tiles_columns * 6 + 2,
+            wall: ground_tiles_columns * 1 + 0,
+        });
     }
 
     fn update_player_graphics(

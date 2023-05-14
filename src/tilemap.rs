@@ -6,9 +6,8 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet},
     player::Player,
-    GameState, TILE_SIZE, npc::Npc,
+    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite},
 };
 
 pub struct TileMapPlugin;
@@ -31,28 +30,28 @@ impl Plugin for TileMapPlugin {
     }
 }
 
-fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
+fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>, characters: Res<CharacterSheet>) {
     let file = File::open("assets/map.txt").expect("No map file found");
     let mut tiles = Vec::new();
 
     for (y, line) in BufReader::new(file).lines().enumerate() {
         if let Ok(line) = line {
             for (x, char) in line.chars().enumerate() {
-                let color = match char {
-                    '#' => Color::rgb(0.7, 0.7, 0.7),
-                    '@' => Color::rgb(0.5, 0.5, 0.2),
-                    '~' => Color::rgb(0.2, 0.9, 0.2),
-                    _ => Color::rgb(0.9, 0.9, 0.9),
+                let index = match char {
+                    '.' => ground_tiles.sand,
+                    '~' => ground_tiles.grass,
+                    '#' => ground_tiles.wall,
+                    _ => ground_tiles.sand
                 };
 
-                let tile = spawn_ascii_sprite(
+                let tile = spawn_ground_tile_sprite(
                     &mut commands,
-                    &ascii,
-                    char as usize,
-                    color,
+                    &ground_tiles,
+                    index,
                     Vec3::new(x as f32 * TILE_SIZE, -(y as f32) * TILE_SIZE, 100.0),
                     Vec3::splat(1.0),
                 );
+
                 if char == '#' {
                     commands.entity(tile).insert(TileCollider);
                 }
@@ -60,6 +59,14 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
                     commands.entity(tile).insert(EncounterSpawner);
                 }
                 if char == '@' {
+                    let character_tile = spawn_character_sprite(
+                        &mut commands,
+                        &characters,
+                        characters.healer,
+                        Vec3::new(x as f32 * TILE_SIZE, -(y as f32) * TILE_SIZE, 150.0),
+                        Vec3::splat(1.0)
+                    );
+                    tiles.push(character_tile);
                     commands.entity(tile).insert(Npc::Healer).insert(TileCollider);
                 }
 
