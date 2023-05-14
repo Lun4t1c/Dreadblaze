@@ -60,13 +60,14 @@ fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>
                     commands.entity(tile).insert(EncounterSpawner);
                 }
                 if char == '@' {
-                    spawn_character_sprite(
+                    let character_tile = spawn_character_sprite(
                         &mut commands,
                         &characters,
                         characters.healer,
                         Vec3::new(x as f32 * TILE_SIZE, -(y as f32) * TILE_SIZE, 150.0),
                         Vec3::splat(1.0)
                     );
+                    tiles.push(character_tile);
                     commands.entity(tile).insert(Npc::Healer).insert(TileCollider);
                 }
 
