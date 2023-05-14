@@ -10,3 +10,4 @@
 
 ### Bugs
 - [ ] Crashes after pressing space when fading out
+- [ ] Enemy sprite is wrong for split second after combat begins
