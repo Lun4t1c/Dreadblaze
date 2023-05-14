@@ -4,8 +4,9 @@
 
 - [ ] Fighting multiple enemies
 - [ ] Graphics
-- [ ] Code cleanup
+- [X] Code cleanup
 - [ ] Healing sound
+- [ ] Grass animation
 
 ### Bugs
 - [ ] Crashes after pressing space when fading out

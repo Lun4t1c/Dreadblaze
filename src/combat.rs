@@ -1,9 +1,9 @@
-use bevy::{prelude::*, transform, input::keyboard, render::camera::Camera2d};
-use bevy_inspector_egui::{Inspectable, egui::Visuals};
+use bevy::{prelude::*, render::camera::Camera2d};
+use bevy_inspector_egui::{Inspectable};
 
 use crate::{
     ascii::{
-        self, spawn_ascii_sprite, spawn_ascii_text, spawn_nine_slice, AsciiSheet, AsciiText,
+        spawn_ascii_text, spawn_nine_slice, AsciiSheet,
         NineSlice, NineSliceIndices,
     },
     fadeout::create_fadeout,
@@ -217,8 +217,7 @@ fn give_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
     mut player_query: Query<(&mut Player, &mut CombatStats)>,
-    mut enemy_query: Query<&Enemy>,
-    mut keyboard: ResMut<Input<KeyCode>>
+    enemy_query: Query<&Enemy>,
 ) {
     let exp_reward = match enemy_query.single().enemy_type {
         EnemyType::Bat => 10,
@@ -287,7 +286,6 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<C
         },
     };
 
-    let enemy_health = 3;
     let health_text = spawn_ascii_text(
         &mut commands,
         &ascii,

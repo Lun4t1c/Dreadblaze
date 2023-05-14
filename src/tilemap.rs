@@ -6,7 +6,6 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet},
     player::Player,
     GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite},
 };

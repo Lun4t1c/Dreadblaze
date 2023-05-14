@@ -1,4 +1,4 @@
-use bevy::{prelude::*, input::keyboard, render::camera::Camera2d};
+use bevy::{prelude::*, render::camera::Camera2d};
 
 use crate::{combat::CombatStats, player::Player, ascii::{AsciiSheet, NineSliceIndices, spawn_nine_slice, spawn_ascii_sprite, spawn_ascii_text}, TILE_SIZE, CLEAR, GameState};
 

@@ -1,4 +1,3 @@
-use bevy::animation;
 use::bevy::prelude::*;
 
 use crate::{combat::EnemyType, TILE_SIZE};
@@ -59,11 +58,6 @@ pub fn spawn_enemy_sprite(
     translation: Vec3,
     enemy_type: EnemyType
 ) -> Entity {
-    let mut sprite = match enemy_type {
-        EnemyType::Bat => TextureAtlasSprite::new(characters.bat_frames[0]),
-        EnemyType::Ghost => TextureAtlasSprite::new(characters.ghost_frames[0]),
-    };
-
     let mut sprite = TextureAtlasSprite::new(characters.bat_frames[0]);
     sprite.custom_size = Some(Vec2::splat(0.5));
     let animation = match enemy_type {

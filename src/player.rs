@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::collide_aabb::collide, render::camera::Camera2d};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet},
+    ascii::{AsciiSheet},
     combat::CombatStats,
     fadeout::create_fadeout,
     tilemap::{EncounterSpawner, TileCollider},
