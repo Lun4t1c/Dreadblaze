@@ -7,7 +7,7 @@ use bevy::prelude::*;
 
 use crate::{
     player::Player,
-    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite},
+    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite, spawn_world_object_sprite, WorldObjectsSheet},
 };
 
 pub struct TileMapPlugin;
@@ -30,7 +30,12 @@ impl Plugin for TileMapPlugin {
     }
 }
 
-fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>, characters: Res<CharacterSheet>) {
+fn create_simple_map(
+    mut commands: Commands,
+    ground_tiles: Res<GroundTilesSheet>,
+    characters: Res<CharacterSheet>,
+    world_objects: Res<WorldObjectsSheet>
+) {
     let file = File::open("assets/map.txt").expect("No map file found");
     let mut tiles = Vec::new();
 
@@ -56,7 +61,22 @@ fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>
                     commands.entity(tile).insert(TileCollider);
                 }
                 if char == '~' {
-                    commands.entity(tile).insert(EncounterSpawner);
+                    let world_object_sprite = spawn_world_object_sprite(
+                        &mut commands,
+                        &world_objects,
+                        world_objects.grass,
+                        Vec3::new(0.0, 0.0, 150.0),
+                        Vec3::splat(0.8),
+                    );
+                    commands.entity(tile)
+                        .insert(Name::new("grass_tile".to_string()))
+                        .insert(EncounterSpawner)
+                        .add_child(world_object_sprite);
+                        // .insert(FrameAnimation {
+                        //     timer: Timer::from_seconds(0.2, true),
+                        //     frames: world_objects.grass.to_vec(),
+                        //     current_frame: 0
+                        // });
                 }
                 if char == '@' {
                     let character_tile = spawn_character_sprite(

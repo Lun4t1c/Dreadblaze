@@ -6,7 +6,8 @@
 
 - [ ] Graphics
 
-- [X] Code cleanup
+- [ ] Code cleanup
+    - [ ] Assets structure
 
 - [ ] Healing sound
 
@@ -20,6 +21,11 @@
 - [ ] Shops
 
 - [ ] Player inventory
+
+- [ ] Credits
+    - [ ] Tutorial
+    - [ ] Author
+    - [ ] Pokemon-like tileset (https://www.deviantart.com/magiscarf/art/Tileset-ver-3-Free-690477146)
 
 ### Bugs
 - [ ] Crashes after pressing space when fading out
