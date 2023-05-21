@@ -24,6 +24,11 @@ pub struct GroundTilesSheet {
     pub wall: usize,
 }
 
+pub struct WorldObjectsSheet {
+    pub handle: Handle<TextureAtlas>,
+    pub grass: [usize; 2],
+}
+
 pub enum FacingDirection {
     Up,
     Down,
@@ -94,7 +99,7 @@ pub fn spawn_ground_tile_sprite(
     scale: Vec3,
 ) -> Entity {
     let mut sprite = TextureAtlasSprite::new(index);
-    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));    
 
     commands
         .spawn_bundle(SpriteSheetBundle {
@@ -124,6 +129,30 @@ pub fn spawn_character_sprite(
         .spawn_bundle(SpriteSheetBundle {
             sprite: sprite,
             texture_atlas: characters.handle.clone(),
+            transform: Transform {
+                translation: translation,
+                scale: scale,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .id()
+}
+
+pub fn spawn_world_object_sprite(
+    commands: &mut Commands,
+    world_objects_sheet: &WorldObjectsSheet,
+    index: usize,
+    translation: Vec3,
+    scale: Vec3,
+) -> Entity {
+    let mut sprite = TextureAtlasSprite::new(index);
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            sprite: sprite,
+            texture_atlas: world_objects_sheet.handle.clone(),
             transform: Transform {
                 translation: translation,
                 scale: scale,
@@ -176,6 +205,20 @@ impl GraphicsPlugin {
             grass: ground_tiles_columns * 15 + 2,
             sand: ground_tiles_columns * 6 + 2,
             wall: ground_tiles_columns * 1 + 0,
+        });
+
+        // World objects sheet
+        let world_objects_sheet_handle = assets.load("pokemon_tileset.png");
+        let world_objects_atlas = TextureAtlas::from_grid_with_padding(
+            world_objects_sheet_handle, Vec2::splat(16.0), 120, 210, Vec2::splat(0.0)
+        );
+        let world_objects_atlas_handle = texture_atlases.add(world_objects_atlas);
+
+        let world_objects_columns = 120;
+
+        commands.insert_resource(WorldObjectsSheet {
+            handle: world_objects_atlas_handle,
+            grass: [world_objects_columns * 49 + 0, world_objects_columns * 53 + 0],
         });
     }
 

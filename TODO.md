@@ -5,12 +5,14 @@
 - [ ] Fighting multiple enemies
 
 - [ ] Graphics
+    - [ ] Healer animation
+    - [X] Grass animation
 
-- [X] Code cleanup
+- [ ] Code cleanup
+    - [ ] Assets structure
 
 - [ ] Healing sound
 
-- [ ] Grass animation
 
 - [ ] More refined map system
     - [ ] Area name
@@ -19,7 +21,14 @@
 
 - [ ] Shops
 
+- [ ] Recursively hiding map (https://github.com/bevyengine/bevy/issues/838)
+
 - [ ] Player inventory
+
+- [ ] Credits
+    - [ ] Tutorial
+    - [ ] Author
+    - [ ] Pokemon-like tileset (https://www.deviantart.com/magiscarf/art/Tileset-ver-3-Free-690477146)
 
 ### Bugs
 - [ ] Crashes after pressing space when fading out

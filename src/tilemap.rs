@@ -6,8 +6,7 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    player::Player,
-    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite},
+    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite, spawn_world_object_sprite, WorldObjectsSheet, FrameAnimation},
 };
 
 pub struct TileMapPlugin;
@@ -25,12 +24,17 @@ impl Plugin for TileMapPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(create_simple_map))
-            .add_system_set(SystemSet::on_resume(GameState::Overworld).with_system(show_map))
-            .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_map));
+            .add_system_set(SystemSet::on_resume(GameState::Overworld).with_system(show_map_recursive))
+            .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_map_recursive));
     }
 }
 
-fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>, characters: Res<CharacterSheet>) {
+fn create_simple_map(
+    mut commands: Commands,
+    ground_tiles: Res<GroundTilesSheet>,
+    characters: Res<CharacterSheet>,
+    world_objects: Res<WorldObjectsSheet>
+) {
     let file = File::open("assets/map.txt").expect("No map file found");
     let mut tiles = Vec::new();
 
@@ -56,7 +60,23 @@ fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>
                     commands.entity(tile).insert(TileCollider);
                 }
                 if char == '~' {
-                    commands.entity(tile).insert(EncounterSpawner);
+                    let world_object_sprite = spawn_world_object_sprite(
+                        &mut commands,
+                        &world_objects,
+                        world_objects.grass[0],
+                        Vec3::new(0.0, 0.0, 150.0),
+                        Vec3::splat(0.8),
+                    );
+                    commands.entity(world_object_sprite)
+                        .insert(FrameAnimation {
+                            timer: Timer::from_seconds(0.5, true),
+                            frames: world_objects.grass.to_vec(),
+                            current_frame: 0
+                    });
+                    commands.entity(tile)
+                        .insert(Name::new("grass_tile".to_string()))
+                        .insert(EncounterSpawner)
+                        .add_child(world_object_sprite);
                 }
                 if char == '@' {
                     let character_tile = spawn_character_sprite(
@@ -84,28 +104,60 @@ fn create_simple_map(mut commands: Commands, ground_tiles: Res<GroundTilesSheet>
         .push_children(&tiles);
 }
 
-fn hide_map(
-    children_query: Query<&Children, With<Map>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Map>>,
+fn hide_map_recursive(
+    entities: Query<Entity, With<Map>>,
+    mut visibility_query: Query<&mut Visibility>,
+    children_query: Query<&Children>,
 ) {
-    if let Ok(children) = children_query.get_single() {
-        for child in children.iter() {
-            if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = false;
-            }
+    for entity in entities.iter() {
+        hide_entity_recursive(entity, &mut visibility_query, &children_query);
+    }
+}
+
+fn show_map_recursive(
+    entities: Query<Entity, With<Map>>,
+    mut visibility_query: Query<&mut Visibility>,
+    children_query: Query<&Children>,
+) {
+    for entity in entities.iter() {
+        show_entity_recursive(entity, &mut visibility_query, &children_query);
+    }
+}
+
+fn hide_entity_recursive(
+    entity: Entity,
+    mut visibility_query: &mut Query<&mut Visibility>,
+    children_query: &Query<&Children>,
+) {
+    // Hide the current entity
+    if let Ok(mut visibility) = visibility_query.get_mut(entity) {
+        visibility.is_visible = false;
+    }
+
+    // Retrieve the children entities
+    if let Ok(children) = children_query.get(entity) {
+        // Recursively hide the children's children
+        for &child_entity in children.iter() {
+            hide_entity_recursive(child_entity, &mut visibility_query, &children_query);
         }
     }
 }
 
-fn show_map(
-    children_query: Query<&Children, With<Map>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Player>>,
+fn show_entity_recursive(
+    entity: Entity,
+    mut visibility_query: &mut Query<&mut Visibility>,
+    children_query: &Query<&Children>,
 ) {
-    if let Ok(children) = children_query.get_single() {
-        for child in children.iter() {
-            if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = true;
-            }
+    // Show the current entity
+    if let Ok(mut visibility) = visibility_query.get_mut(entity) {
+        visibility.is_visible = true;
+    }
+
+    // Retrieve the children entities
+    if let Ok(children) = children_query.get(entity) {
+        // Recursively show the children's children
+        for &child_entity in children.iter() {
+            show_entity_recursive(child_entity, &mut visibility_query, &children_query);
         }
     }
 }
