@@ -5,13 +5,14 @@
 - [ ] Fighting multiple enemies
 
 - [ ] Graphics
+    - [ ] Healer animation
+    - [X] Grass animation
 
 - [ ] Code cleanup
     - [ ] Assets structure
 
 - [ ] Healing sound
 
-- [ ] Grass animation
 
 - [ ] More refined map system
     - [ ] Area name
