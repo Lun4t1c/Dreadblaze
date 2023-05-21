@@ -6,7 +6,6 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    player::Player,
     GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite, spawn_world_object_sprite, WorldObjectsSheet, FrameAnimation},
 };
 
@@ -25,8 +24,8 @@ impl Plugin for TileMapPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(create_simple_map))
-            .add_system_set(SystemSet::on_resume(GameState::Overworld).with_system(show_map))
-            .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_map));
+            .add_system_set(SystemSet::on_resume(GameState::Overworld).with_system(show_map_recursive))
+            .add_system_set(SystemSet::on_pause(GameState::Overworld).with_system(hide_map_recursive));
     }
 }
 
@@ -105,45 +104,60 @@ fn create_simple_map(
         .push_children(&tiles);
 }
 
-fn hide_map(
-    children_query: Query<&Children, With<Map>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Map>>
+fn hide_map_recursive(
+    entities: Query<Entity, With<Map>>,
+    mut visibility_query: Query<&mut Visibility>,
+    children_query: Query<&Children>,
 ) {
-    if let Ok(children) = children_query.get_single() {
-        for child in children.iter() {
-            if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = false;
-            }
-        }
+    for entity in entities.iter() {
+        hide_entity_recursive(entity, &mut visibility_query, &children_query);
     }
 }
 
-fn show_map(
-    children_query: Query<&Children, With<Map>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Player>>,
+fn show_map_recursive(
+    entities: Query<Entity, With<Map>>,
+    mut visibility_query: Query<&mut Visibility>,
+    children_query: Query<&Children>,
 ) {
-    if let Ok(children) = children_query.get_single() {
-        for child in children.iter() {
-            if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = true;
-            }
-        }
+    for entity in entities.iter() {
+        show_entity_recursive(entity, &mut visibility_query, &children_query);
     }
 }
 
-fn set_visibility_recursive(
-    is_visible: bool,
+fn hide_entity_recursive(
     entity: Entity,
-    visibility: &mut Query<&mut Visibility>,
+    mut visibility_query: &mut Query<&mut Visibility>,
     children_query: &Query<&Children>,
 ) {
-    if let Ok(mut visible) = visibility.get_mut(entity) {
-        visible.is_visible = is_visible;
+    // Hide the current entity
+    if let Ok(mut visibility) = visibility_query.get_mut(entity) {
+        visibility.is_visible = false;
     }
 
+    // Retrieve the children entities
     if let Ok(children) = children_query.get(entity) {
-        for child in children.iter() {
-            set_visibility_recursive(is_visible, *child, visibility, children_query);
+        // Recursively hide the children's children
+        for &child_entity in children.iter() {
+            hide_entity_recursive(child_entity, &mut visibility_query, &children_query);
+        }
+    }
+}
+
+fn show_entity_recursive(
+    entity: Entity,
+    mut visibility_query: &mut Query<&mut Visibility>,
+    children_query: &Query<&Children>,
+) {
+    // Show the current entity
+    if let Ok(mut visibility) = visibility_query.get_mut(entity) {
+        visibility.is_visible = true;
+    }
+
+    // Retrieve the children entities
+    if let Ok(children) = children_query.get(entity) {
+        // Recursively show the children's children
+        for &child_entity in children.iter() {
+            show_entity_recursive(child_entity, &mut visibility_query, &children_query);
         }
     }
 }
