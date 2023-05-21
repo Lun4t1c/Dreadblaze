@@ -26,7 +26,7 @@ pub struct GroundTilesSheet {
 
 pub struct WorldObjectsSheet {
     pub handle: Handle<TextureAtlas>,
-    pub grass: usize,
+    pub grass: [usize; 2],
 }
 
 pub enum FacingDirection {
@@ -112,7 +112,6 @@ pub fn spawn_ground_tile_sprite(
             },
             ..Default::default()
         })
-        .insert(Name::new("pipa".to_string()))
         .id()
 }
 
@@ -219,7 +218,7 @@ impl GraphicsPlugin {
 
         commands.insert_resource(WorldObjectsSheet {
             handle: world_objects_atlas_handle,
-            grass: world_objects_columns * 49 + 0,
+            grass: [world_objects_columns * 49 + 0, world_objects_columns * 53 + 0],
         });
     }
 

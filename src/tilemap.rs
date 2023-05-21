@@ -7,7 +7,7 @@ use bevy::prelude::*;
 
 use crate::{
     player::Player,
-    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite, spawn_world_object_sprite, WorldObjectsSheet},
+    GameState, TILE_SIZE, npc::Npc, graphics::{spawn_ground_tile_sprite, GroundTilesSheet, CharacterSheet, spawn_character_sprite, spawn_world_object_sprite, WorldObjectsSheet, FrameAnimation},
 };
 
 pub struct TileMapPlugin;
@@ -64,19 +64,20 @@ fn create_simple_map(
                     let world_object_sprite = spawn_world_object_sprite(
                         &mut commands,
                         &world_objects,
-                        world_objects.grass,
+                        world_objects.grass[0],
                         Vec3::new(0.0, 0.0, 150.0),
                         Vec3::splat(0.8),
                     );
+                    commands.entity(world_object_sprite)
+                        .insert(FrameAnimation {
+                            timer: Timer::from_seconds(0.5, true),
+                            frames: world_objects.grass.to_vec(),
+                            current_frame: 0
+                    });
                     commands.entity(tile)
                         .insert(Name::new("grass_tile".to_string()))
                         .insert(EncounterSpawner)
                         .add_child(world_object_sprite);
-                        // .insert(FrameAnimation {
-                        //     timer: Timer::from_seconds(0.2, true),
-                        //     frames: world_objects.grass.to_vec(),
-                        //     current_frame: 0
-                        // });
                 }
                 if char == '@' {
                     let character_tile = spawn_character_sprite(
@@ -106,7 +107,7 @@ fn create_simple_map(
 
 fn hide_map(
     children_query: Query<&Children, With<Map>>,
-    mut child_visibility_query: Query<&mut Visibility, Without<Map>>,
+    mut child_visibility_query: Query<&mut Visibility, Without<Map>>
 ) {
     if let Ok(children) = children_query.get_single() {
         for child in children.iter() {
@@ -126,6 +127,23 @@ fn show_map(
             if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
                 child_vis.is_visible = true;
             }
+        }
+    }
+}
+
+fn set_visibility_recursive(
+    is_visible: bool,
+    entity: Entity,
+    visibility: &mut Query<&mut Visibility>,
+    children_query: &Query<&Children>,
+) {
+    if let Ok(mut visible) = visibility.get_mut(entity) {
+        visible.is_visible = is_visible;
+    }
+
+    if let Ok(children) = children_query.get(entity) {
+        for child in children.iter() {
+            set_visibility_recursive(is_visible, *child, visibility, children_query);
         }
     }
 }
