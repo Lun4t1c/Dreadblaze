@@ -20,6 +20,8 @@
 
 - [ ] Shops
 
+- [ ] Recursively hiding map (https://github.com/bevyengine/bevy/issues/838)
+
 - [ ] Player inventory
 
 - [ ] Credits
