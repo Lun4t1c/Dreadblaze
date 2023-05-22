@@ -58,9 +58,9 @@ fn handle_start_button(
 
 fn setup_menu(mut commands: Commands, assets: Res<AssetServer>) {
     let ui_assets = UiAssets {
-        font: assets.load("QuattrocentoSans-Bold.ttf"),
-        button: assets.load("button.png"),
-        button_pressed: assets.load("button_pressed.png"),
+        font: assets.load("fonts/QuattrocentoSans-Bold.ttf"),
+        button: assets.load("ui/button.png"),
+        button_pressed: assets.load("ui/button_pressed.png"),
     };
 
     commands.spawn_bundle(UiCameraBundle::default());

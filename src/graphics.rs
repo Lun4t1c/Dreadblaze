@@ -170,7 +170,7 @@ impl GraphicsPlugin {
         mut texture_atlases: ResMut<Assets<TextureAtlas>>
     ) {
         // Characters sheet
-        let characters_sheet_handle = assets.load("characters.png");
+        let characters_sheet_handle = assets.load("tilesets/characters_tileset.png");
         let characters_atlas = TextureAtlas::from_grid_with_padding(
             characters_sheet_handle, Vec2::splat(16.0), 12, 8, Vec2::splat(2.0)
         );
@@ -192,7 +192,7 @@ impl GraphicsPlugin {
         });
 
         // Ground tiles sheet
-        let ground_tiles_sheet_handle = assets.load("ground-tiles.png");
+        let ground_tiles_sheet_handle = assets.load("tilesets/ground_tileset.png");
         let ground_tiles_atlas = TextureAtlas::from_grid_with_padding(
             ground_tiles_sheet_handle, Vec2::splat(16.0), 32, 32, Vec2::splat(0.0)
         );
@@ -208,7 +208,7 @@ impl GraphicsPlugin {
         });
 
         // World objects sheet
-        let world_objects_sheet_handle = assets.load("pokemon_tileset.png");
+        let world_objects_sheet_handle = assets.load("tilesets/pokemon_tileset.png");
         let world_objects_atlas = TextureAtlas::from_grid_with_padding(
             world_objects_sheet_handle, Vec2::splat(16.0), 120, 210, Vec2::splat(0.0)
         );

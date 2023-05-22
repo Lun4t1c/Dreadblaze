@@ -79,10 +79,10 @@ fn start_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
 }
 
 fn load_audio(mut commands: Commands, audio: Res<Audio>, assets: Res<AssetServer>) {
-    let bgm_handle = assets.load("bip-bop.ogg");
-    let combat_handle = assets.load("ganxta.ogg");
-    let hit_handle = assets.load("hit.wav");
-    let reward_handle = assets.load("reward.wav");
+    let bgm_handle = assets.load("audio/bip-bop.ogg");
+    let combat_handle = assets.load("audio/ganxta.ogg");
+    let hit_handle = assets.load("audio/hit.wav");
+    let reward_handle = assets.load("audio/reward.wav");
 
     let bgm_channel = AudioChannel::new("bgm".to_string());
     let combat_channel = AudioChannel::new("combat".to_string());
