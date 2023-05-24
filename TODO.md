@@ -7,7 +7,7 @@
 - [ ] Graphics
     - [ ] Healer animation
     - [X] Grass animation
-    - [ ] Attacking enemy VFX
+    - [X] Attacking enemy VFX
 
 - [ ] Code cleanup
     - [X] Assets structure
