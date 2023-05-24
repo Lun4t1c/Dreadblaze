@@ -203,6 +203,7 @@ pub fn spawn_ascii_sprite(
             },
             ..Default::default()
         })
+        .insert(Name::new("ascii_sprite"))
         .id()
 }
 

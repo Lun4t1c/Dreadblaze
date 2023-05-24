@@ -29,6 +29,11 @@ pub struct WorldObjectsSheet {
     pub grass: [usize; 2],
 }
 
+pub struct VfxSheet {
+    pub handle: Handle<TextureAtlas>,
+    pub slash: usize,
+}
+
 pub enum FacingDirection {
     Up,
     Down,

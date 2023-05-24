@@ -4,7 +4,7 @@ use bevy_inspector_egui::{Inspectable};
 use crate::{
     ascii::{
         spawn_ascii_text, spawn_nine_slice, AsciiSheet,
-        NineSlice, NineSliceIndices,
+        NineSlice, NineSliceIndices, spawn_ascii_sprite,
     },
     fadeout::create_fadeout,
     player::Player,
@@ -23,6 +23,9 @@ pub enum CombatMenuOption {
     Fight,
     Run,
 }
+
+#[derive(Component)]
+pub struct DespawnTimer(Timer);
 
 #[derive(Component)]
 pub struct CombatText;
@@ -84,6 +87,7 @@ impl Plugin for CombatPlugin {
             .insert_resource(CombatMenuSelection {
                 selected: CombatMenuOption::Fight,
             })
+            .add_system(despawn_system)
             .add_system_set(
                 SystemSet::on_update(CombatState::EnemyTurn(false))
                     .with_system(process_enemy_turn)
@@ -107,6 +111,10 @@ impl Plugin for CombatPlugin {
                     .with_system(despawn_all_combat_text)
                     .with_system(despawn_menu)
                     .with_system(despawn_enemy)
+            )
+            .add_system_set(
+                SystemSet::on_enter(CombatState::PlayerAttack)
+                    .with_system(handle_initial_attack_effects)
             )
             .add_system_set(
                 SystemSet::on_update(CombatState::PlayerAttack)
@@ -143,6 +151,25 @@ fn spawn_player_health(
 
     commands.entity(text).insert(CombatText);
     commands.entity(player).add_child(text);
+}
+
+fn handle_initial_attack_effects(
+    mut commands: Commands,
+    ascii: Res<AsciiSheet>,
+    mut enemy_graphics_query: Query<&Transform, With<Enemy>>
+) {
+    let enemy_transform = enemy_graphics_query.iter_mut().next().unwrap();
+    
+    let attack_vfx = spawn_ascii_sprite(
+        &mut commands,
+        &ascii,
+        '/' as usize,
+        Color::rgb(0.9, 0.9, 0.9),
+        Vec3::new(enemy_transform.translation.x, enemy_transform.translation.y, 150.0),
+        Vec3::splat(6.0));
+
+    commands.entity(attack_vfx)
+        .insert(DespawnTimer(Timer::from_seconds(0.3, false)));
 }
 
 fn handle_attack_effects(
@@ -503,4 +530,14 @@ fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, attack
     let mut camera_transform = camera_query.single_mut();
     camera_transform.translation.x = attack_fx.current_shake;
     camera_transform.translation.y = 0.0;
+}
+
+fn despawn_system(time: Res<Time>, mut commands: Commands, mut query: Query<(Entity, &mut DespawnTimer)>) {
+    for (entity, mut despawn_timer) in query.iter_mut() {
+        despawn_timer.0.tick(time.delta());
+
+        if despawn_timer.0.finished() {
+            commands.entity(entity).despawn();
+        }
+    }
 }
