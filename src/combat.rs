@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::Camera2d, ecs::event::Events};
+use bevy::{prelude::*, render::camera::Camera2d};
 use bevy_inspector_egui::{Inspectable};
 
 use crate::{
@@ -521,7 +521,7 @@ fn combat_input(
     mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
     mut fight_event_writer: EventWriter<FightEvent>,
-    player_query: Query<&CombatStats, With<Player>>,
+    mut player_query: Query<&mut CombatStats, With<Player>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut menu_state: ResMut<CombatMenuSelection>,
     ascii: Res<AsciiSheet>,
@@ -563,15 +563,18 @@ fn combat_input(
                 });
             }
             CombatMenuOption::MagicAttack => {
-                let player_stats = player_query.single();
-                let target = enemy_query.iter().next().unwrap();
+                let mut player_stats = player_query.single_mut();
+                if player_stats.mana > 0 {
+                    player_stats.mana -= 1;
+                    let target = enemy_query.iter().next().unwrap();
 
-                fight_event_writer.send(FightEvent {
-                    target: target,
-                    attack_type: AttackType::MagicGeneric,
-                    damage_amount: 4,
-                    next_state: CombatState::PlayerAttack,
-                });
+                    fight_event_writer.send(FightEvent {
+                        target: target,
+                        attack_type: AttackType::MagicGeneric,
+                        damage_amount: 4,
+                        next_state: CombatState::PlayerAttack,
+                    });
+                }
             }
             CombatMenuOption::Run => {
                 create_fadeout(&mut commands, None, &ascii);
