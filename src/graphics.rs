@@ -32,6 +32,7 @@ pub struct WorldObjectsSheet {
 pub struct VfxSheet {
     pub handle: Handle<TextureAtlas>,
     pub slash: usize,
+    pub magic: usize,
 }
 
 pub enum FacingDirection {
@@ -224,6 +225,21 @@ impl GraphicsPlugin {
         commands.insert_resource(WorldObjectsSheet {
             handle: world_objects_atlas_handle,
             grass: [world_objects_columns * 49 + 0, world_objects_columns * 53 + 0],
+        });
+
+        // VFX sheet
+        let vfx_sheet_handle = assets.load("tilesets/Ascii.png");
+        let vfx_atlas = TextureAtlas::from_grid_with_padding(
+            vfx_sheet_handle, Vec2::splat(16.0), 16, 16, Vec2::splat(2.0)
+        );
+        let vfx_atlas_handle = texture_atlases.add(vfx_atlas);
+
+        let vfx_columns = 16;
+
+        commands.insert_resource(VfxSheet {
+            handle: vfx_atlas_handle,
+            slash: vfx_columns * 2 + 15,
+            magic: vfx_columns * 4 + 15,
         });
     }
 

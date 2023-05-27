@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::Camera2d};
+use bevy::{prelude::*, render::camera::Camera2d, ecs::event::Events};
 use bevy_inspector_egui::{Inspectable};
 
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     },
     fadeout::create_fadeout,
     player::Player,
-    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_enemy_sprite},
+    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_enemy_sprite, VfxSheet},
 };
 
 #[derive(Component)]
@@ -16,11 +16,12 @@ pub struct Enemy {
     enemy_type: EnemyType
 }
 
-pub const MENU_COUNT: isize = 2;
+pub const MENU_COUNT: isize = 3;
 
 #[derive(Component, PartialEq, Eq, Clone, Copy)]
 pub enum CombatMenuOption {
-    Fight,
+    Attack,
+    MagicAttack,
     Run,
 }
 
@@ -34,6 +35,7 @@ pub struct CombatPlugin;
 
 pub struct FightEvent {
     target: Entity,
+    attack_type: AttackType,
     damage_amount: isize,
     next_state: CombatState
 }
@@ -42,6 +44,8 @@ pub struct FightEvent {
 pub struct CombatStats {
     pub health: isize,
     pub max_health: isize,
+    pub mana: isize,
+    pub max_mana: isize,
     pub attack: isize,
     pub defense: isize,
 }
@@ -50,6 +54,13 @@ pub struct CombatStats {
 pub enum EnemyType {
     Bat,
     Ghost,
+}
+
+#[derive(Clone, Copy)]
+pub enum AttackType {
+    Standard,
+    MagicGeneric,
+    MagicFire
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -85,7 +96,7 @@ impl Plugin for CombatPlugin {
                 current_shake: 0.0
             })
             .insert_resource(CombatMenuSelection {
-                selected: CombatMenuOption::Fight,
+                selected: CombatMenuOption::Attack,
             })
             .add_system(despawn_system)
             .add_system_set(
@@ -156,14 +167,24 @@ fn spawn_player_health(
 fn handle_initial_attack_effects(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
-    mut enemy_graphics_query: Query<&Transform, With<Enemy>>
+    vfx_sheet: Res<VfxSheet>,
+    mut enemy_graphics_query: Query<&Transform, With<Enemy>>,
+    mut event_reader: EventReader<FightEvent>
 ) {
     let enemy_transform = enemy_graphics_query.iter_mut().next().unwrap();
+    let mut vfx_index = 0;
+    for event in event_reader.iter() {
+        vfx_index = match event.attack_type {
+            AttackType::Standard => vfx_sheet.slash,
+            AttackType::MagicGeneric => vfx_sheet.magic,
+            AttackType::MagicFire => vfx_sheet.slash
+        }
+    };
     
     let attack_vfx = spawn_ascii_sprite(
         &mut commands,
         &ascii,
-        '/' as usize,
+        vfx_index,
         Color::rgb(0.9, 0.9, 0.9),
         Vec3::new(enemy_transform.translation.x, enemy_transform.translation.y, 150.0),
         Vec3::splat(6.0));
@@ -222,6 +243,7 @@ fn process_enemy_turn(
 
     fight_event.send(FightEvent {
         target: player_ent,
+        attack_type: AttackType::Standard,
         damage_amount: enemy_stats.attack,
         next_state: CombatState::EnemyAttack,
     });
@@ -302,12 +324,16 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<C
         EnemyType::Bat => CombatStats {
             health: 3,
             max_health: 3,
+            mana: 0,
+            max_mana: 0,
             attack: 2,
             defense: 1,
         },
         EnemyType::Ghost => CombatStats {
             health: 5,
             max_health: 5,
+            mana: 0,
+            max_mana: 0,
             attack: 3,
             defense: 2,
         },
@@ -396,6 +422,8 @@ fn spawn_combat_menu(
     ascii: Res<AsciiSheet>,
     nine_slice_indices: Res<NineSliceIndices>,
 ) {
+    // TODO rework spawning combat menu in loop
+
     let box_height = 3.0;
     let box_center_y = -1.0 + box_height * TILE_SIZE / 2.0;
 
@@ -412,17 +440,30 @@ fn spawn_combat_menu(
         Vec2::new(run_width, box_height),
     );
 
-    let fight_text = "Fight";
-    let fight_width = (fight_text.len() + 2) as f32;
-    let fight_center_x = RESOLUTION - (run_width * TILE_SIZE) - (fight_width * TILE_SIZE / 2.0);
+    let magic_text = "Magic";
+    let magic_width = (magic_text.len() + 2) as f32;
+    let magic_center_x = RESOLUTION - (run_width * TILE_SIZE) - (magic_width * TILE_SIZE / 2.0);
     spawn_combat_button(
         &mut commands,
         &ascii,
         &nine_slice_indices,
-        Vec3::new(fight_center_x, box_center_y, 100.0),
-        fight_text,
-        CombatMenuOption::Fight,
-        Vec2::new(fight_width, box_height),
+        Vec3::new(magic_center_x, box_center_y, 100.0),
+        magic_text,
+        CombatMenuOption::MagicAttack,
+        Vec2::new(magic_width, box_height),
+    );
+
+    let attack_text = "Attack";
+    let attack_width = (attack_text.len() + 2) as f32;
+    let attack_center_x = RESOLUTION - (run_width * TILE_SIZE) - (magic_width * TILE_SIZE) - (attack_width * TILE_SIZE / 2.0);
+    spawn_combat_button(
+        &mut commands,
+        &ascii,
+        &nine_slice_indices,
+        Vec3::new(attack_center_x, box_center_y, 100.0),
+        attack_text,
+        CombatMenuOption::Attack,
+        Vec2::new(attack_width, box_height),
     );
 }
 
@@ -479,7 +520,7 @@ fn combat_damage_calc(
 fn combat_input(
     mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
-    mut fight_event: EventWriter<FightEvent>,
+    mut fight_event_writer: EventWriter<FightEvent>,
     player_query: Query<&CombatStats, With<Player>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut menu_state: ResMut<CombatMenuSelection>,
@@ -501,21 +542,34 @@ fn combat_input(
     new_selection = (new_selection + MENU_COUNT) % MENU_COUNT;
 
     menu_state.selected = match new_selection {
-        0 => CombatMenuOption::Fight,
-        1 => CombatMenuOption::Run,
+        0 => CombatMenuOption::Attack,
+        1 => CombatMenuOption::MagicAttack,
+        2 => CombatMenuOption::Run,
         _ => unreachable!("Bad menu selection"),
     };
 
     if keyboard.just_pressed(KeyCode::Return) {
         match menu_state.selected {
-            CombatMenuOption::Fight => {
+            CombatMenuOption::Attack => {
                 let player_stats = player_query.single();
                 // TODO handle multiple enemies and enemy selection
                 let target = enemy_query.iter().next().unwrap();
 
-                fight_event.send(FightEvent {
+                fight_event_writer.send(FightEvent {
                     target: target,
+                    attack_type: AttackType::Standard,
                     damage_amount: player_stats.attack,
+                    next_state: CombatState::PlayerAttack,
+                });
+            }
+            CombatMenuOption::MagicAttack => {
+                let player_stats = player_query.single();
+                let target = enemy_query.iter().next().unwrap();
+
+                fight_event_writer.send(FightEvent {
+                    target: target,
+                    attack_type: AttackType::MagicGeneric,
+                    damage_amount: 4,
                     next_state: CombatState::PlayerAttack,
                 });
             }
