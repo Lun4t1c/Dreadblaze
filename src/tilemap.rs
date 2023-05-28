@@ -35,7 +35,7 @@ fn create_simple_map(
     characters: Res<CharacterSheet>,
     world_objects: Res<WorldObjectsSheet>
 ) {
-    let file = File::open("assets/map.txt").expect("No map file found");
+    let file = File::open("assets/maps/map.txt").expect("No map file found");
     let mut tiles = Vec::new();
 
     for (y, line) in BufReader::new(file).lines().enumerate() {

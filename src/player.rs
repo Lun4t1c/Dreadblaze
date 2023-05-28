@@ -236,6 +236,8 @@ fn spawn_player(mut commands: Commands, characters: Res<CharacterSheet>) {
         .insert(CombatStats {
             health: 10,
             max_health: 10,
+            mana: 5,
+            max_mana: 5,
             attack: 2,
             defense: 1,
         });

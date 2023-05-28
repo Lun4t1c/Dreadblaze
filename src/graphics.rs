@@ -29,6 +29,12 @@ pub struct WorldObjectsSheet {
     pub grass: [usize; 2],
 }
 
+pub struct VfxSheet {
+    pub handle: Handle<TextureAtlas>,
+    pub slash: usize,
+    pub magic: usize,
+}
+
 pub enum FacingDirection {
     Up,
     Down,
@@ -170,7 +176,7 @@ impl GraphicsPlugin {
         mut texture_atlases: ResMut<Assets<TextureAtlas>>
     ) {
         // Characters sheet
-        let characters_sheet_handle = assets.load("characters.png");
+        let characters_sheet_handle = assets.load("tilesets/characters_tileset.png");
         let characters_atlas = TextureAtlas::from_grid_with_padding(
             characters_sheet_handle, Vec2::splat(16.0), 12, 8, Vec2::splat(2.0)
         );
@@ -192,7 +198,7 @@ impl GraphicsPlugin {
         });
 
         // Ground tiles sheet
-        let ground_tiles_sheet_handle = assets.load("ground-tiles.png");
+        let ground_tiles_sheet_handle = assets.load("tilesets/ground_tileset.png");
         let ground_tiles_atlas = TextureAtlas::from_grid_with_padding(
             ground_tiles_sheet_handle, Vec2::splat(16.0), 32, 32, Vec2::splat(0.0)
         );
@@ -208,7 +214,7 @@ impl GraphicsPlugin {
         });
 
         // World objects sheet
-        let world_objects_sheet_handle = assets.load("pokemon_tileset.png");
+        let world_objects_sheet_handle = assets.load("tilesets/pokemon_tileset.png");
         let world_objects_atlas = TextureAtlas::from_grid_with_padding(
             world_objects_sheet_handle, Vec2::splat(16.0), 120, 210, Vec2::splat(0.0)
         );
@@ -219,6 +225,21 @@ impl GraphicsPlugin {
         commands.insert_resource(WorldObjectsSheet {
             handle: world_objects_atlas_handle,
             grass: [world_objects_columns * 49 + 0, world_objects_columns * 53 + 0],
+        });
+
+        // VFX sheet
+        let vfx_sheet_handle = assets.load("tilesets/Ascii.png");
+        let vfx_atlas = TextureAtlas::from_grid_with_padding(
+            vfx_sheet_handle, Vec2::splat(16.0), 16, 16, Vec2::splat(2.0)
+        );
+        let vfx_atlas_handle = texture_atlases.add(vfx_atlas);
+
+        let vfx_columns = 16;
+
+        commands.insert_resource(VfxSheet {
+            handle: vfx_atlas_handle,
+            slash: vfx_columns * 2 + 15,
+            magic: vfx_columns * 4 + 15,
         });
     }
 

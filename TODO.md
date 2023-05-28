@@ -7,12 +7,14 @@
 - [ ] Graphics
     - [ ] Healer animation
     - [X] Grass animation
+    - [X] Attacking enemy VFX
 
 - [ ] Code cleanup
-    - [ ] Assets structure
+    - [X] Assets structure
 
 - [ ] Healing sound
 
+- [ ] Save system
 
 - [ ] More refined map system
     - [ ] Area name
@@ -21,7 +23,7 @@
 
 - [ ] Shops
 
-- [ ] Recursively hiding map (https://github.com/bevyengine/bevy/issues/838)
+- [X] Recursively hiding map (thx ChatGPT)
 
 - [ ] Player inventory
 
