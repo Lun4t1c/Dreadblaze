@@ -1,19 +1,20 @@
 use bevy::{prelude::*, render::camera::Camera2d};
-use bevy_inspector_egui::{Inspectable};
+use bevy_inspector_egui::Inspectable;
 
 use crate::{
     ascii::{
-        spawn_ascii_text, spawn_nine_slice, AsciiSheet,
-        NineSlice, NineSliceIndices, spawn_ascii_sprite,
+        spawn_ascii_sprite, spawn_ascii_text, spawn_nine_slice, AsciiSheet, NineSlice,
+        NineSliceIndices,
     },
     fadeout::create_fadeout,
-    player::Player,
-    GameState, RESOLUTION, TILE_SIZE, graphics::{CharacterSheet, spawn_enemy_sprite, VfxSheet},
+    graphics::{spawn_enemy_sprite, CharacterSheet, VfxSheet},
+    player::{Player, self},
+    GameState, RESOLUTION, TILE_SIZE,
 };
 
 #[derive(Component)]
 pub struct Enemy {
-    enemy_type: EnemyType
+    enemy_type: EnemyType,
 }
 
 pub const MENU_COUNT: isize = 3;
@@ -31,13 +32,16 @@ pub struct DespawnTimer(Timer);
 #[derive(Component)]
 pub struct CombatText;
 
+#[derive(Component)]
+pub struct CombatManaText;
+
 pub struct CombatPlugin;
 
 pub struct FightEvent {
     target: Entity,
     attack_type: AttackType,
     damage_amount: isize,
-    next_state: CombatState
+    next_state: CombatState,
 }
 
 #[derive(Component, Inspectable)]
@@ -60,7 +64,7 @@ pub enum EnemyType {
 pub enum AttackType {
     Standard,
     MagicGeneric,
-    MagicFire
+    MagicFire,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -93,15 +97,14 @@ impl Plugin for CombatPlugin {
                 timer: Timer::from_seconds(0.7, true),
                 flash_speed: 0.1,
                 screen_shake_amount: 0.1,
-                current_shake: 0.0
+                current_shake: 0.0,
             })
             .insert_resource(CombatMenuSelection {
                 selected: CombatMenuOption::Attack,
             })
             .add_system(despawn_system)
             .add_system_set(
-                SystemSet::on_update(CombatState::EnemyTurn(false))
-                    .with_system(process_enemy_turn)
+                SystemSet::on_update(CombatState::EnemyTurn(false)).with_system(process_enemy_turn),
             )
             .add_system_set(
                 SystemSet::on_update(GameState::Combat)
@@ -114,54 +117,70 @@ impl Plugin for CombatPlugin {
                 SystemSet::on_enter(GameState::Combat)
                     .with_system(set_starting_state)
                     .with_system(spawn_enemy)
-                    .with_system(spawn_player_health)
+                    .with_system(spawn_player_stats_texts)
                     .with_system(spawn_combat_menu),
             )
             .add_system_set(
-                SystemSet::on_exit(GameState::Combat)                    
+                SystemSet::on_exit(GameState::Combat)
                     .with_system(despawn_all_combat_text)
                     .with_system(despawn_menu)
-                    .with_system(despawn_enemy)
+                    .with_system(despawn_enemy),
             )
             .add_system_set(
                 SystemSet::on_enter(CombatState::PlayerAttack)
-                    .with_system(handle_initial_attack_effects)
+                    .with_system(handle_initial_attack_effects),
             )
             .add_system_set(
-                SystemSet::on_update(CombatState::PlayerAttack)
-                    .with_system(handle_attack_effects)
+                SystemSet::on_update(CombatState::PlayerAttack).with_system(handle_attack_effects),
             )
             .add_system_set(
                 SystemSet::on_enter(CombatState::Reward)
                     .with_system(give_reward)
-                    .with_system(despawn_enemy)
+                    .with_system(despawn_enemy),
             )
             .add_system_set(
-                SystemSet::on_update(CombatState::Reward).with_system(handle_accepting_reward)
+                SystemSet::on_update(CombatState::Reward).with_system(handle_accepting_reward),
             )
             .add_system_set(
-                SystemSet::on_update(CombatState::EnemyAttack)
-                    .with_system(handle_attack_effects)
+                SystemSet::on_update(CombatState::EnemyAttack).with_system(handle_attack_effects),
             );
     }
 }
 
-fn spawn_player_health(
+fn spawn_player_stats_texts(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
-    player_query: Query<(Entity, &CombatStats, &Transform), With<Player>>
+    player_query: Query<(Entity, &CombatStats, &Transform), With<Player>>,
 ) {
     let (player, stats, transform) = player_query.single();
-    let health_text = format!("Health: {}", stats.health);
-    let text = spawn_ascii_text(
+
+    // health
+    let health_text_string = format!("Health: {}", stats.health);
+    let health_text = spawn_ascii_text(
         &mut commands,
         &ascii,
-        &health_text,
-        Vec3::new(-RESOLUTION + TILE_SIZE, -1.0 + TILE_SIZE, 0.0) - transform.translation        
+        &health_text_string,
+        Vec3::new(-RESOLUTION + TILE_SIZE, -1.0 + TILE_SIZE, 0.0) - transform.translation,
     );
+    commands
+        .entity(health_text)
+        .insert(CombatText)
+        .insert(Name::new("health_text"));
+    commands.entity(player).add_child(health_text);
 
-    commands.entity(text).insert(CombatText);
-    commands.entity(player).add_child(text);
+    // mana
+    let mana_text_string = format!("Mana: {}", stats.mana);
+    let mana_text = spawn_ascii_text(
+        &mut commands,
+        &ascii,
+        &mana_text_string,
+        Vec3::new(-RESOLUTION + TILE_SIZE, -0.9 + TILE_SIZE, 0.0) - transform.translation,
+    );
+    commands
+        .entity(mana_text)
+        .insert(CombatManaText)
+        .insert(Name::new("mana_text"));
+    commands.entity(player).add_child(mana_text);
 }
 
 fn handle_initial_attack_effects(
@@ -169,7 +188,7 @@ fn handle_initial_attack_effects(
     ascii: Res<AsciiSheet>,
     vfx_sheet: Res<VfxSheet>,
     mut enemy_graphics_query: Query<&Transform, With<Enemy>>,
-    mut event_reader: EventReader<FightEvent>
+    mut event_reader: EventReader<FightEvent>,
 ) {
     let enemy_transform = enemy_graphics_query.iter_mut().next().unwrap();
     let mut vfx_index = 0;
@@ -177,19 +196,25 @@ fn handle_initial_attack_effects(
         vfx_index = match event.attack_type {
             AttackType::Standard => vfx_sheet.slash,
             AttackType::MagicGeneric => vfx_sheet.magic,
-            AttackType::MagicFire => vfx_sheet.slash
+            AttackType::MagicFire => vfx_sheet.slash,
         }
-    };
-    
+    }
+
     let attack_vfx = spawn_ascii_sprite(
         &mut commands,
         &ascii,
         vfx_index,
         Color::rgb(0.9, 0.9, 0.9),
-        Vec3::new(enemy_transform.translation.x, enemy_transform.translation.y, 150.0),
-        Vec3::splat(6.0));
+        Vec3::new(
+            enemy_transform.translation.x,
+            enemy_transform.translation.y,
+            150.0,
+        ),
+        Vec3::splat(6.0),
+    );
 
-    commands.entity(attack_vfx)
+    commands
+        .entity(attack_vfx)
         .insert(DespawnTimer(Timer::from_seconds(0.3, false)));
 }
 
@@ -197,7 +222,7 @@ fn handle_attack_effects(
     mut attack_fx: ResMut<AttackEffects>,
     time: Res<Time>,
     mut enemy_graphics_query: Query<&mut Visibility, With<Enemy>>,
-    mut state: ResMut<State<CombatState>>
+    mut state: ResMut<State<CombatState>>,
 ) {
     attack_fx.timer.tick(time.delta());
     let mut enemy_sprite = enemy_graphics_query.iter_mut().next().unwrap();
@@ -223,9 +248,7 @@ fn handle_attack_effects(
     }
 }
 
-fn set_starting_state(
-    mut combat_state: ResMut<State<CombatState>>
-) {
+fn set_starting_state(mut combat_state: ResMut<State<CombatState>>) {
     // TODO speed and turn calculations
     // throw away error if it occurs
     let _ = combat_state.set(CombatState::PlayerTurn);
@@ -235,8 +258,8 @@ fn process_enemy_turn(
     mut fight_event: EventWriter<FightEvent>,
     mut combat_state: ResMut<State<CombatState>>,
     enemy_query: Query<&CombatStats, With<Enemy>>,
-    player_query: Query<Entity, With<Player>>
-) {    
+    player_query: Query<Entity, With<Player>>,
+) {
     let player_ent = player_query.single();
     // TODO support multiple enemies
     let enemy_stats = enemy_query.iter().next().unwrap();
@@ -277,7 +300,7 @@ fn give_reward(
         &mut commands,
         &ascii,
         &reward_text,
-        Vec3::new(-((reward_text.len() / 2) as f32 * TILE_SIZE), 0.0, 0.0)
+        Vec3::new(-((reward_text.len() / 2) as f32 * TILE_SIZE), 0.0, 0.0),
     );
 
     commands.entity(text).insert(CombatText);
@@ -288,28 +311,23 @@ fn give_reward(
             &mut commands,
             &ascii,
             level_text,
-            Vec3::new(-((level_text.len()/2) as f32 * TILE_SIZE), 
-            -1.5 * TILE_SIZE,
-            0.0
+            Vec3::new(
+                -((level_text.len() / 2) as f32 * TILE_SIZE),
+                -1.5 * TILE_SIZE,
+                0.0,
             ),
         );
         commands.entity(text).insert(CombatText);
     }
 }
 
-fn despawn_menu(
-    mut commands: Commands,
-    button_query: Query<Entity, With<CombatMenuOption>>
-) {
+fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<CombatMenuOption>>) {
     for button in button_query.iter() {
         commands.entity(button).despawn_recursive();
     }
 }
 
-fn despawn_all_combat_text(
-    mut commands: Commands,
-    text_query: Query<Entity, With<CombatText>>
-) {
+fn despawn_all_combat_text(mut commands: Commands, text_query: Query<Entity, Or<(With<CombatText>, With<CombatManaText>)>>) {
     for entity in text_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
@@ -347,12 +365,15 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<C
         Vec3::new(-4.5 * TILE_SIZE, 0.5, 100.0),
     );
     commands.entity(health_text).insert(CombatText);
-    let sprite = spawn_enemy_sprite(&mut commands, &characters, Vec3::new(0.0, 0.3, 100.0), enemy_type);
+    let sprite = spawn_enemy_sprite(
+        &mut commands,
+        &characters,
+        Vec3::new(0.0, 0.3, 100.0),
+        enemy_type,
+    );
     commands
         .entity(sprite)
-        .insert(Enemy {
-            enemy_type
-        })
+        .insert(Enemy { enemy_type })
         .insert(stats)
         .insert(Name::new("Bat"))
         .add_child(health_text);
@@ -455,7 +476,10 @@ fn spawn_combat_menu(
 
     let attack_text = "Attack";
     let attack_width = (attack_text.len() + 2) as f32;
-    let attack_center_x = RESOLUTION - (run_width * TILE_SIZE) - (magic_width * TILE_SIZE) - (attack_width * TILE_SIZE / 2.0);
+    let attack_center_x = RESOLUTION
+        - (run_width * TILE_SIZE)
+        - (magic_width * TILE_SIZE)
+        - (attack_width * TILE_SIZE / 2.0);
     spawn_combat_button(
         &mut commands,
         &ascii,
@@ -521,11 +545,12 @@ fn combat_input(
     mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
     mut fight_event_writer: EventWriter<FightEvent>,
-    mut player_query: Query<&mut CombatStats, With<Player>>,
+    mut player_query: Query<(&mut CombatStats, &Children, Entity), With<Player>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut menu_state: ResMut<CombatMenuSelection>,
     ascii: Res<AsciiSheet>,
-    combat_state: Res<State<CombatState>>
+    combat_state: Res<State<CombatState>>,
+    mana_text: Query<&Transform, With<CombatManaText>>,
 ) {
     if combat_state.current() != &CombatState::PlayerTurn {
         return;
@@ -551,7 +576,7 @@ fn combat_input(
     if keyboard.just_pressed(KeyCode::Return) {
         match menu_state.selected {
             CombatMenuOption::Attack => {
-                let player_stats = player_query.single();
+                let (player_stats, player_children, player_entity) = player_query.single();
                 // TODO handle multiple enemies and enemy selection
                 let target = enemy_query.iter().next().unwrap();
 
@@ -563,10 +588,30 @@ fn combat_input(
                 });
             }
             CombatMenuOption::MagicAttack => {
-                let mut player_stats = player_query.single_mut();
+                let (mut player_stats, player_children, player_entity) = player_query.single_mut();
+                let target = enemy_query.iter().next().unwrap();
+
                 if player_stats.mana > 0 {
                     player_stats.mana -= 1;
-                    let target = enemy_query.iter().next().unwrap();
+
+                    //Update mana
+                    for child in player_children.iter() {
+                        //See if this child is the health text
+                        if let Ok(transform) = mana_text.get(*child) {
+                            //Delete old text
+                            commands.entity(*child).despawn_recursive();
+                            //Create new text
+                            let new_mana_text = spawn_ascii_text(
+                                &mut commands,
+                                &ascii,
+                                &format!("Mana: {}", player_stats.mana as usize),
+                                //relative to enemy pos
+                                transform.translation,
+                            );
+                            commands.entity(new_mana_text).insert(CombatManaText);
+                            commands.entity(player_entity).add_child(new_mana_text);
+                        }
+                    }
 
                     fight_event_writer.send(FightEvent {
                         target: target,
@@ -583,13 +628,20 @@ fn combat_input(
     }
 }
 
-fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, attack_fx: Res<AttackEffects>) {
+fn combat_camera(
+    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    attack_fx: Res<AttackEffects>,
+) {
     let mut camera_transform = camera_query.single_mut();
     camera_transform.translation.x = attack_fx.current_shake;
     camera_transform.translation.y = 0.0;
 }
 
-fn despawn_system(time: Res<Time>, mut commands: Commands, mut query: Query<(Entity, &mut DespawnTimer)>) {
+fn despawn_system(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut DespawnTimer)>,
+) {
     for (entity, mut despawn_timer) in query.iter_mut() {
         despawn_timer.0.tick(time.delta());
 
