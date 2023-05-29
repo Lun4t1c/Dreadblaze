@@ -12,7 +12,7 @@
 - [ ] Code cleanup
     - [X] Assets structure
 
-- [ ] Healing sound
+- [X] Healing sound
 
 - [ ] Save system
 

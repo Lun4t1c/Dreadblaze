@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera2d};
+use bevy_kira_audio::{Audio};
 
-use crate::{combat::CombatStats, player::Player, ascii::{AsciiSheet, NineSliceIndices, spawn_nine_slice, spawn_ascii_sprite, spawn_ascii_text}, TILE_SIZE, CLEAR, GameState};
+use crate::{combat::CombatStats, player::Player, ascii::{AsciiSheet, NineSliceIndices, spawn_nine_slice, spawn_ascii_sprite, spawn_ascii_text}, TILE_SIZE, CLEAR, GameState, audio::AudioState};
 
 pub struct NpcPlugin;
 
@@ -78,7 +79,9 @@ fn npc_speech(
     npc_query: Query<(&Npc, &Transform)>,
     keyboard: Res<Input<KeyCode>>,
     ascii: Res<AsciiSheet>,
-    indices: Res<NineSliceIndices> 
+    indices: Res<NineSliceIndices>,
+    audio: Res<Audio>, 
+    audio_state: Res<AudioState>
 ) {
     let (mut player, mut stats, transform) = player_query.single_mut();
     let camera_transform = camera_query.single();
@@ -94,6 +97,8 @@ fn npc_speech(
                 < TILE_SIZE * 1.5 {
                     player.active = false;
                     stats.health = stats.max_health;
+
+                    audio.play_in_channel(audio_state.heal_handle.clone(), &audio_state.sfx_channel);
 
                     spawn_textbox(
                         &mut commands,
