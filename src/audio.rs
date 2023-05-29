@@ -72,6 +72,7 @@ fn volume_control(
     }
     audio_state.volume = audio_state.volume.clamp(0.0, 1.0);
     audio.set_volume_in_channel(audio_state.volume, &audio_state.bgm_channel);
+    audio.set_volume_in_channel(audio_state.volume, &audio_state.combat_channel);
 }
 
 fn start_bgm_music(audio: Res<Audio>, audio_state: Res<AudioState>) {
