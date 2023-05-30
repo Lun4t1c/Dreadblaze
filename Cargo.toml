@@ -20,6 +20,6 @@ bevy = { version = "0.7", features = [
     "vorbis",
     "x11",
     "filesystem_watcher" ] }
-bevy_kira_audio = { version = "0.9", features = ["ogg", "wav"] }
+bevy_kira_audio = { version = "0.9", features = ["ogg", "wav", "mp3"] }
 bevy-inspector-egui = "0.10"
 rand = "*"
